@@ -7,7 +7,7 @@ As the Android Studio AI Agent, your goal is to assist the user in writing the K
 ## 📁 Directory Structure & Context
 You have several resources available to understand the environment and the target APIs:
 
-- **`data/`**: This directory is where the user will place the source `.xlsx` or `.csv` files containing the data to be synced.
+- **`data/`**: This directory is where the user typically places the source `.xlsx` or `.csv` files. The actual file path is configured via `CSV_FILE_PATH` in the `.env` file.
 - **`.openproject/`**: 
   - Contains `.env.example` showing the required configuration variables.
   - Contains `work_packages_api.md` detailing how to authenticate, create, and update Work Packages using the OpenProject REST API (with Ktor examples).
@@ -18,8 +18,8 @@ You have several resources available to understand the environment and the targe
 ## 🛠️ Your Tasks
 When the user asks you to implement the sync logic, you should follow these steps:
 
-1. **Environment Setup**: Ensure the user has copied the `.env.example` files to actual `.env` files and populated them with their credentials. (Do not commit real `.env` files). Read these credentials into the KMP application.
-2. **Read the Data**: Write Kotlin code to parse the Excel/CSV file located in the `data/` directory. You can use common Kotlin CSV libraries (like `kotlin-csv`) or Apache POI (if running purely on JVM/Desktop target).
+1. **Environment Setup**: Ensure the user has copied the `.env.example` files to actual `.env` files and populated them with their credentials and the path to the CSV file (`CSV_FILE_PATH`). (Do not commit real `.env` files). Read these variables into the KMP application.
+2. **Read the Data**: Write Kotlin code to parse the Excel/CSV file specified by `CSV_FILE_PATH`. You can use common Kotlin CSV libraries (like `kotlin-csv`) or Apache POI (if running purely on JVM/Desktop target).
 3. **Map the Data**: Map the columns from the source file to the attributes required by OpenProject Work Packages (e.g., Subject, Description, Assignee, etc.).
 4. **Sync via OpenProject API**: 
    - Use Ktor Client to interact with the OpenProject instance.

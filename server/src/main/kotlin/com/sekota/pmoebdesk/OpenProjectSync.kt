@@ -389,12 +389,20 @@ fun main() = runBlocking {
     val client = OpenProjectClient(host, apiKey)
     client.fetchStatuses()
     
-    val csvFile = File(rootDir, "data/ISO_PMO_ ET_2025.csv")
+    val csvPath = env["CSV_FILE_PATH"] ?: "data/ISO_PMO_ ET_2025.csv"
+    val csvFile = if (File(csvPath).isAbsolute) {
+        File(csvPath)
+    } else {
+        File(rootDir, csvPath)
+    }
     
     if (!csvFile.exists()) {
         println("CSV file not found: ${csvFile.absolutePath}")
+        println("Please set CSV_FILE_PATH in your .env file or ensure the file exists at the default location.")
         return@runBlocking
     }
+
+    println("Using CSV file: ${csvFile.absolutePath}")
 
     val dryRun = false // Set to false for actual sync
     if (dryRun) println("=== DRY RUN MODE ENABLED ===")
