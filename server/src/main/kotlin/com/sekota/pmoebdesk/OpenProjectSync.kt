@@ -389,7 +389,7 @@ fun main() = runBlocking {
     val client = OpenProjectClient(host, apiKey)
     client.fetchStatuses()
     
-    val csvPath = env["CSV_FILE_PATH"] ?: "data/ISO_PMO_ ET_2025.csv"
+    val csvPath = env["CSV_FILE_PATH"] ?: ""
     val csvFile = if (File(csvPath).isAbsolute) {
         File(csvPath)
     } else {
