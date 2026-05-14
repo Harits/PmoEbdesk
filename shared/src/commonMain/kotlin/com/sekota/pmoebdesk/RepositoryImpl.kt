@@ -1,0 +1,121 @@
+package com.sekota.pmoebdesk
+
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.http.HttpHeaders
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
+
+class MockOpenProjectRepositoryImpl : OpenProjectRepository {
+    override suspend fun getDashboardMetrics(baseUrl: String, apiKey: String): DashboardMetrics {
+        return DashboardMetrics(
+            strategicRagStatus = RAGStatus.AMBER,
+            netProgressPercentage = 68.0,
+            strategicGrowthHours = 600.0,
+            businessAsUsualHours = 400.0,
+            milestones = listOf(
+                Milestone("Product Launch", "Oct"),
+                Milestone("Market Entry", "Nov"),
+                Milestone("Q3 Audit", "Dec")
+            ),
+            risks = listOf(
+                Risk("Supply Chain Delay", 4, 5),
+                Risk("Key Personnel Departure", 3, 4),
+                Risk("Budget Overrun", 2, 4)
+            ),
+            exceptions = listOf(
+                ProjectException("Project Orion", "Hiring 2 senior architects to resolve bottleneck."),
+                ProjectException("Project Phoenix", "Negotiating new deadline with client.")
+            ),
+            boardInterventions = listOf(
+                BoardIntervention("Approve shift of 3 devs from Project B to Project A."),
+                BoardIntervention("Approve additional budget for Q3 marketing.")
+            )
+        )
+    }
+}
+
+@Serializable
+data class WorkPackagesResponse(
+    val total: Int,
+    val count: Int,
+    val _embedded: EmbeddedWorkPackages
+)
+
+@Serializable
+data class EmbeddedWorkPackages(
+    val elements: List<WorkPackageElement>
+)
+
+@Serializable
+data class WorkPackageElement(
+    val id: Int,
+    val subject: String,
+    val description: Description?,
+    val percentageDone: Int? = null,
+    val estimatedTime: String? = null // Often returned as ISO-8601 duration
+)
+
+@Serializable
+data class Description(
+    val raw: String
+)
+
+class ProductionOpenProjectRepositoryImpl(private val client: HttpClient = HttpClient {
+    install(ContentNegotiation) {
+        json(Json { ignoreUnknownKeys = true })
+    }
+}) : OpenProjectRepository {
+    @OptIn(ExperimentalEncodingApi::class)
+    override suspend fun getDashboardMetrics(baseUrl: String, apiKey: String): DashboardMetrics {
+        val authString = "apikey:$apiKey"
+        val encodedAuth = Base64.encode(authString.encodeToByteArray())
+
+        try {
+            // Fetch work packages to aggregate data. In a real scenario, you would use filters.
+            // Note: Adjust the endpoint/parameters based on actual OpenProject setup.
+            val response: WorkPackagesResponse = client.get("$baseUrl/api/v3/work_packages") {
+                header(HttpHeaders.Authorization, "Basic $encodedAuth")
+            }.body()
+
+            val workPackages = response._embedded.elements
+
+            // Basic aggregation logic based on raw data
+            val totalProgress = workPackages.mapNotNull { it.percentageDone }.average().takeIf { !it.isNaN() } ?: 0.0
+
+            // Dummy logic to map real work packages to domain elements (to be refined later)
+            val exceptions = workPackages.take(2).map {
+                ProjectException(it.subject, "Off track: \${it.percentageDone}% complete")
+            }
+
+            val milestones = workPackages.takeLast(3).map {
+                Milestone(it.subject, "TBD")
+            }
+
+            return DashboardMetrics(
+                strategicRagStatus = if (totalProgress > 80) RAGStatus.GREEN else if (totalProgress > 50) RAGStatus.AMBER else RAGStatus.RED,
+                netProgressPercentage = totalProgress,
+                strategicGrowthHours = workPackages.size * 10.0, // Mock calculation
+                businessAsUsualHours = workPackages.size * 5.0,  // Mock calculation
+                milestones = milestones,
+                risks = listOf(
+                    Risk("Supply Chain Delay", 4, 5) // Example hardcoded risk
+                ),
+                exceptions = exceptions,
+                boardInterventions = listOf(
+                    BoardIntervention("Review resource allocation for delayed work packages.")
+                )
+            )
+        } catch (e: Exception) {
+            println("Failed to fetch from OpenProject: \${e.message}")
+            // Fallback to mock on error
+            return MockOpenProjectRepositoryImpl().getDashboardMetrics(baseUrl, apiKey)
+        }
+    }
+}

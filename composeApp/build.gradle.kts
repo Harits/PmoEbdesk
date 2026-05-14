@@ -9,6 +9,15 @@ plugins {
 
 kotlin {
     jvm()
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        browser {
+            commonWebpackConfig {
+                outputFileName = "composeApp.js"
+            }
+        }
+        binaries.executable()
+    }
     
     sourceSets {
         commonMain.dependencies {
@@ -28,6 +37,9 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+        }
+        wasmJsMain.dependencies {
+            implementation(libs.kotlinx.serialization.json)
         }
     }
 }
