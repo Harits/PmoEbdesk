@@ -50,3 +50,25 @@ To test the real integration with your OpenProject instance via Ktor:
 ## Troubleshooting
 - **CORS Issues:** If the data fails to load in Production mode, check your browser's Developer Console. You may need to explicitly configure your OpenProject instance's CORS settings to allow requests from `http://localhost:8080`.
 - **Blank Screen:** Ensure that `config.json` is properly being generated in the `/usr/share/nginx/html` directory inside the Docker container. You can check the container logs (`docker-compose logs web`) for any entrypoint errors.
+
+## 3. Local Testing without Docker
+If you prefer not to use Docker, you can run the web application directly through Gradle's development server.
+
+1. Ensure your Java 17+ environment is set up.
+2. In the root of the project, run:
+   \`\`\`bash
+   ./gradlew :composeApp:wasmJsBrowserDevelopmentRun
+   \`\`\`
+   This will start a local webpack dev server, typically on port `8080`.
+
+3. Because there is no Nginx container injecting the `.env` variables into a `config.json` file, the development server will look for a static `config.json` file at the root of the served resources.
+
+   To provide one, manually create a `config.json` file in `composeApp/src/wasmJsMain/resources/` with the required keys before running the command:
+   \`\`\`json
+   {
+     "OPENPROJECT_URL": "http://localhost",
+     "OPENPROJECT_API_KEY": "mock_key",
+     "USE_MOCK_DATA": true
+   }
+   \`\`\`
+4. Once the server starts, navigate to `http://localhost:8080` to view the dashboard.
