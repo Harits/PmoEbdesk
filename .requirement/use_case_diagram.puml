@@ -1,0 +1,35 @@
+@startuml
+left to right direction
+actor "Board of Director" as bod
+actor "Admin" as admin
+
+rectangle "PMO Board of Directors Dashboard" {
+    usecase "View PMO Dashboard" as UC1
+    usecase "View Strategic RAG Status" as UC2
+    usecase "View Progress Updates" as UC3
+    usecase "View Critical Path Milestones" as UC4
+    usecase "View Exception Management (The Red List)" as UC5
+    usecase "View Risk Heatmap" as UC6
+    usecase "Manage Board Interventions" as UC7
+    usecase "Sign Decisions" as UC8
+}
+
+bod --> UC1
+bod --> UC2
+bod --> UC3
+bod --> UC4
+bod --> UC5
+bod --> UC6
+bod --> UC7
+bod --> UC8
+
+admin --> UC7
+
+UC1 ..> UC2 : includes
+UC1 ..> UC3 : includes
+UC1 ..> UC4 : includes
+UC1 ..> UC5 : includes
+UC1 ..> UC6 : includes
+UC1 ..> UC7 : includes
+
+@enduml
