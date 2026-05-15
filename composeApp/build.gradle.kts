@@ -6,9 +6,16 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.androidApplication)
 }
 
 kotlin {
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
+    }
+    
     jvm()
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs {
@@ -35,6 +42,10 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.compose.uiTooling)
+        }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
@@ -45,6 +56,38 @@ kotlin {
     }
 }
 
+android {
+    namespace = "com.sekota.pmoebdesk"
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "com.sekota.pmoebdesk"
+        minSdk = 24
+        targetSdk = 35
+        versionCode = 1
+        versionName = "1.0"
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+        }
+    }
+    buildFeatures {
+        compose = true
+    }
+    dependencies {
+        debugImplementation(libs.compose.uiTooling)
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+}
 
 compose.desktop {
     application {
