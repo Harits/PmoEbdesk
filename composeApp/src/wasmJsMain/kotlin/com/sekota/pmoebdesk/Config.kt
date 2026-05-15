@@ -16,15 +16,24 @@ data class AppConfig(
 @OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 suspend fun loadConfig(): AppConfig? {
     return try {
+        println("Fetching config.json...")
         val response = window.fetch("config.json").await<Response>()
         if (response.ok) {
-            val jsonText = response.text().await<String>()
-            Json { ignoreUnknownKeys = true }.decodeFromString<AppConfig>(jsonText)
+            println("config.json fetched successfully, decoding...")
+            // In Wasm, response.text() returns a Promise of JsString.
+            // String is not a JsAny, so await<String>() might fail at runtime.
+            val jsString = response.text().await<kotlin.js.JsString>()
+            val jsonText = jsString.toString()
+            Json { ignoreUnknownKeys = true }.decodeFromString<AppConfig>(jsonText).also {
+                println("Config loaded: $it")
+            }
         } else {
+            println("Failed to fetch config.json: ${response.status} ${response.statusText}")
             null
         }
     } catch (e: Exception) {
-        println("Failed to load config.json: \${e.message}")
-        null
+        println("Error loading config.json: ${e.message}")
+        e.printStackTrace()
+        throw e // Rethrow to be caught in main.kt
     }
 }

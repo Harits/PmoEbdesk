@@ -15,9 +15,19 @@ import androidx.compose.runtime.Composable
 fun main() {
     ComposeViewport(document.body!!) {
         var config by remember { mutableStateOf<AppConfig?>(null) }
+        var error by remember { mutableStateOf<String?>(null) }
 
         LaunchedEffect(Unit) {
-            config = loadConfig()
+            try {
+                val loadedConfig = loadConfig()
+                if (loadedConfig != null) {
+                    config = loadedConfig
+                } else {
+                    error = "Failed to load config.json. Please check if the file exists in resources/ and has the correct format. Check browser console for details."
+                }
+            } catch (e: Exception) {
+                error = "Exception: ${e.message}\n${e.stackTraceToString()}"
+            }
         }
 
         if (config != null) {
@@ -28,6 +38,8 @@ fun main() {
             }
 
             AppContainer(config!!, repository)
+        } else if (error != null) {
+            Text("Error: $error")
         } else {
             Text("Loading config...")
         }
