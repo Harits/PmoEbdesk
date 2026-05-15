@@ -1,10 +1,11 @@
 package com.sekota.pmoebdesk
 
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
@@ -71,6 +72,11 @@ class ProductionOpenProjectRepositoryImpl(private val client: HttpClient = HttpC
     install(ContentNegotiation) {
         json(Json { ignoreUnknownKeys = true })
     }
+    install(HttpTimeout) {
+        requestTimeoutMillis = 15000
+        connectTimeoutMillis = 15000
+        socketTimeoutMillis = 15000
+    }
 }) : OpenProjectRepository {
     @OptIn(ExperimentalEncodingApi::class)
     override suspend fun getDashboardMetrics(baseUrl: String, apiKey: String): DashboardMetrics {
@@ -78,11 +84,20 @@ class ProductionOpenProjectRepositoryImpl(private val client: HttpClient = HttpC
         val encodedAuth = Base64.encode(authString.encodeToByteArray())
 
         try {
-            // Fetch work packages to aggregate data. In a real scenario, you would use filters.
-            // Note: Adjust the endpoint/parameters based on actual OpenProject setup.
-            val response: WorkPackagesResponse = client.get("$baseUrl/api/v3/work_packages") {
+            println("Fetching dashboard metrics from $baseUrl/api/v3/work_packages...")
+            
+            val httpResponse = client.get("$baseUrl/api/v3/work_packages?pageSize=20") {
                 header(HttpHeaders.Authorization, "Basic $encodedAuth")
-            }.body()
+                header(HttpHeaders.Accept, "application/json")
+            }
+            
+            println("HTTP Response received: ${httpResponse.status}")
+            
+            val responseText = httpResponse.bodyAsText()
+            println("Response body length: ${responseText.length}")
+
+            val response: WorkPackagesResponse = Json { ignoreUnknownKeys = true }.decodeFromString(responseText)
+            println("Decoded ${response.count} work packages")
 
             val workPackages = response._embedded.elements
 
@@ -112,8 +127,9 @@ class ProductionOpenProjectRepositoryImpl(private val client: HttpClient = HttpC
                     BoardIntervention("Review resource allocation for delayed work packages.")
                 )
             )
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             println("Failed to fetch from OpenProject: \${e.message}")
+            e.printStackTrace()
             // Fallback to mock on error
             return MockOpenProjectRepositoryImpl().getDashboardMetrics(baseUrl, apiKey)
         }

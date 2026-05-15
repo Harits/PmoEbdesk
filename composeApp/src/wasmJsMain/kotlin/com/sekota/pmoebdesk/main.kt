@@ -49,13 +49,24 @@ fun main() {
 @Composable
 fun AppContainer(config: AppConfig, repository: OpenProjectRepository) {
     var metrics by remember { mutableStateOf<DashboardMetrics?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        metrics = repository.getDashboardMetrics(config.OPENPROJECT_URL, config.OPENPROJECT_API_KEY)
+        try {
+            println("AppContainer: Starting data fetch...")
+            val result = repository.getDashboardMetrics(config.OPENPROJECT_URL, config.OPENPROJECT_API_KEY)
+            metrics = result
+            println("AppContainer: Data fetch completed. Metrics received.")
+        } catch (e: Throwable) {
+            println("AppContainer: Data fetch failed: ${e.message}")
+            error = e.message ?: "Unknown error"
+        }
     }
 
     if (metrics != null) {
         App(metrics)
+    } else if (error != null) {
+        Text("Error: \$error")
     } else {
         Text("Loading dashboard data...")
     }
