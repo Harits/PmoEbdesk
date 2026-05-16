@@ -1,5 +1,6 @@
 package com.sekota.pmoebdesk
 
+import com.sekota.pmoebdesk.dashboard.domain.model.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

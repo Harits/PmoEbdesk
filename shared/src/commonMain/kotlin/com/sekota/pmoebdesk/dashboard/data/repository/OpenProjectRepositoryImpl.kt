@@ -1,5 +1,8 @@
-package com.sekota.pmoebdesk
+package com.sekota.pmoebdesk.dashboard.data.repository
 
+import com.sekota.pmoebdesk.dashboard.data.remote.model.WorkPackagesResponse
+import com.sekota.pmoebdesk.dashboard.domain.model.*
+import com.sekota.pmoebdesk.dashboard.domain.repository.OpenProjectRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -8,7 +11,6 @@ import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -41,32 +43,6 @@ class MockOpenProjectRepositoryImpl : OpenProjectRepository {
         )
     }
 }
-
-@Serializable
-data class WorkPackagesResponse(
-    val total: Int,
-    val count: Int,
-    val _embedded: EmbeddedWorkPackages
-)
-
-@Serializable
-data class EmbeddedWorkPackages(
-    val elements: List<WorkPackageElement>
-)
-
-@Serializable
-data class WorkPackageElement(
-    val id: Int,
-    val subject: String,
-    val description: Description?,
-    val percentageDone: Int? = null,
-    val estimatedTime: String? = null // Often returned as ISO-8601 duration
-)
-
-@Serializable
-data class Description(
-    val raw: String
-)
 
 class ProductionOpenProjectRepositoryImpl(private val client: HttpClient = HttpClient {
     install(ContentNegotiation) {
@@ -106,7 +82,7 @@ class ProductionOpenProjectRepositoryImpl(private val client: HttpClient = HttpC
 
             // Dummy logic to map real work packages to domain elements (to be refined later)
             val exceptions = workPackages.take(2).map {
-                ProjectException(it.subject, "Off track: \${it.percentageDone}% complete")
+                ProjectException(it.subject, "Off track: ${it.percentageDone}% complete")
             }
 
             val milestones = workPackages.takeLast(3).map {
@@ -128,7 +104,7 @@ class ProductionOpenProjectRepositoryImpl(private val client: HttpClient = HttpC
                 )
             )
         } catch (e: Throwable) {
-            println("Failed to fetch from OpenProject: \${e.message}")
+            println("Failed to fetch from OpenProject: ${e.message}")
             e.printStackTrace()
             // Fallback to mock on error
             return MockOpenProjectRepositoryImpl().getDashboardMetrics(baseUrl, apiKey)

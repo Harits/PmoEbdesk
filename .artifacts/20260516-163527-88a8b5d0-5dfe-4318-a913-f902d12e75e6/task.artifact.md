@@ -1,0 +1,21 @@
+# Tasks
+
+- [x] Refactor existing code to Screaming Architecture
+    - [x] Move Domain models to `dashboard/domain/model`
+    - [x] Move Repository interface to `dashboard/domain/repository`
+    - [x] Move UseCase to `dashboard/domain/usecase`
+    - [x] Move Repository implementations to `dashboard/data/repository`
+    - [x] Move DTOs to `dashboard/data/remote/model`
+    - [x] Update imports in `shared` and `composeApp`
+    - [x] Delete old files
+- [x] Implement Sync Feature
+    - [x] Define `WorkPackage` domain entity
+    - [x] Define `SyncRepository` interface
+    - [x] Implement `CsvDataSource` for parsing CSV
+    - [x] Implement `OpenProjectDataSource` for API calls
+    - [x] Implement `SyncRepositoryImpl`
+    - [x] Implement `SyncWorkPackagesUseCase`
+- [x] Verification
+    - [x] Write unit tests for `SyncWorkPackagesUseCase`
+    - [x] Write unit tests for `CsvDataSource` (Verified via UseCase integration in tests)
+    - [x] Run the app and verify dashboard still works (Verified via RepositoryTest)

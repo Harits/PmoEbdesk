@@ -1,6 +1,10 @@
 package com.sekota.pmoebdesk
 
 import androidx.compose.runtime.LaunchedEffect
+import com.sekota.pmoebdesk.dashboard.domain.model.DashboardMetrics
+import com.sekota.pmoebdesk.dashboard.domain.repository.OpenProjectRepository
+import com.sekota.pmoebdesk.dashboard.data.repository.MockOpenProjectRepositoryImpl
+import com.sekota.pmoebdesk.dashboard.data.repository.ProductionOpenProjectRepositoryImpl
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,7 +70,7 @@ fun AppContainer(config: AppConfig, repository: OpenProjectRepository) {
     if (metrics != null) {
         App(metrics)
     } else if (error != null) {
-        Text("Error: \$error")
+        Text("Error: $error")
     } else {
         Text("Loading dashboard data...")
     }

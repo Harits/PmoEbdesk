@@ -1,0 +1,77 @@
+package com.sekota.pmoebdesk.dashboard.ui.components
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.sekota.pmoebdesk.core.ui.PrimaryNavy
+
+@Composable
+fun CriticalPathRoadmapCard(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.height(300.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
+            Text("Critical Path Roadmap", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            Box(modifier = Modifier.fillMaxWidth().height(80.dp)) {
+                HorizontalDivider(modifier = Modifier.align(Alignment.Center).padding(horizontal = 40.dp), thickness = 1.dp, color = Color.LightGray)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+                    TimelinePoint("OCT", "Product Launch", isCompleted = true)
+                    TimelinePoint("NOV", "Market Entry", isCompleted = true)
+                    TimelinePoint("DEC", "Q3 Audit", isCompleted = false)
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Surface(
+                color = Color(0xFFF1F4F8),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Canvas(modifier = Modifier.size(20.dp)) {
+                        drawCircle(color = PrimaryNavy, style = Stroke(width = 1.5.dp.toPx()))
+                        drawCircle(color = PrimaryNavy, radius = 1.dp.toPx(), center = center.copy(y = center.y - 4.dp.toPx()))
+                        drawLine(color = PrimaryNavy, start = center.copy(y = center.y - 1.dp.toPx()), end = center.copy(y = center.y + 5.dp.toPx()), strokeWidth = 2.dp.toPx())
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        "Next milestone 'Market Entry' is currently tracking 2 days ahead of schedule.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Black
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TimelinePoint(month: String, title: String, isCompleted: Boolean) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .background(if (isCompleted) PrimaryNavy else Color.LightGray, CircleShape)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(month, fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+        Text(title, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}

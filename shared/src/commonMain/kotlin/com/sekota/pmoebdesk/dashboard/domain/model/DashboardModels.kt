@@ -1,4 +1,4 @@
-package com.sekota.pmoebdesk
+package com.sekota.pmoebdesk.dashboard.domain.model
 
 enum class RAGStatus {
     RED, AMBER, GREEN
