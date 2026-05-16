@@ -24,13 +24,13 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+            implementation(libs.ktor.client.mock)
         }
         jvmMain.dependencies {
             implementation(libs.kotlin.csv)
         }
         jvmTest.dependencies {
-            implementation("io.ktor:ktor-client-mock:3.4.3")
-            implementation("io.ktor:ktor-client-cio:3.4.3")
+            implementation(libs.ktor.client.cio)
         }
     }
 }

@@ -18,7 +18,7 @@ fun DashboardContent(metrics: DashboardMetrics, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
-            PortfolioHealthBanner()
+            PortfolioHealthBanner(metrics.strategicRagStatus, metrics.trendPercentage)
         }
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {

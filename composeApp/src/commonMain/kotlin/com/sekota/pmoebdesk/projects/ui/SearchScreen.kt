@@ -1,4 +1,4 @@
-package com.sekota.pmoebdesk.projects.ui
+    package com.sekota.pmoebdesk.projects.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding

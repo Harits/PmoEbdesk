@@ -20,6 +20,7 @@ class MockOpenProjectRepositoryImpl : OpenProjectRepository {
         return DashboardMetrics(
             strategicRagStatus = RAGStatus.AMBER,
             netProgressPercentage = 68.0,
+            trendPercentage = 4.2,
             strategicGrowthHours = 600.0,
             businessAsUsualHours = 400.0,
             milestones = listOf(
@@ -28,9 +29,9 @@ class MockOpenProjectRepositoryImpl : OpenProjectRepository {
                 Milestone("Q3 Audit", "Dec")
             ),
             risks = listOf(
-                Risk("Supply Chain Delay", 4, 5),
-                Risk("Key Personnel Departure", 3, 4),
-                Risk("Budget Overrun", 2, 4)
+                Risk("Supply Chain Delay", 4, 5, RiskLevel.HIGH),
+                Risk("Key Personnel Departure", 3, 4, RiskLevel.MEDIUM),
+                Risk("Budget Overrun", 2, 4, RiskLevel.LOW)
             ),
             exceptions = listOf(
                 ProjectException("Project Orion", "Hiring 2 senior architects to resolve bottleneck."),
@@ -60,54 +61,74 @@ class ProductionOpenProjectRepositoryImpl(private val client: HttpClient = HttpC
         val encodedAuth = Base64.encode(authString.encodeToByteArray())
 
         try {
-            println("Fetching dashboard metrics from $baseUrl/api/v3/work_packages...")
-            
-            val httpResponse = client.get("$baseUrl/api/v3/work_packages?pageSize=20") {
+            val httpResponse = client.get("$baseUrl/api/v3/work_packages?pageSize=100") {
                 header(HttpHeaders.Authorization, "Basic $encodedAuth")
                 header(HttpHeaders.Accept, "application/json")
             }
-            
-            println("HTTP Response received: ${httpResponse.status}")
-            
+
             val responseText = httpResponse.bodyAsText()
-            println("Response body length: ${responseText.length}")
-
             val response: WorkPackagesResponse = Json { ignoreUnknownKeys = true }.decodeFromString(responseText)
-            println("Decoded ${response.count} work packages")
-
             val workPackages = response._embedded.elements
 
-            // Basic aggregation logic based on raw data
             val totalProgress = workPackages.mapNotNull { it.percentageDone }.average().takeIf { !it.isNaN() } ?: 0.0
 
-            // Dummy logic to map real work packages to domain elements (to be refined later)
-            val exceptions = workPackages.take(2).map {
-                ProjectException(it.subject, "Off track: ${it.percentageDone}% complete")
-            }
+            val exceptions = workPackages
+                .filter { (it.percentageDone ?: 0) < 100 && it.dueDate != null && isOverdue(it.dueDate) }
+                .map { ProjectException(it.subject, "Overdue since ${it.dueDate}. Progress: ${it.percentageDone ?: 0}%") }
 
-            val milestones = workPackages.takeLast(3).map {
-                Milestone(it.subject, "TBD")
-            }
+            val milestones = workPackages
+                .filter { it._links?.type?.title?.contains("Milestone", ignoreCase = true) == true || it.subject.contains("Milestone", ignoreCase = true) }
+                .map { Milestone(it.subject, formatMonth(it.dueDate)) }
 
             return DashboardMetrics(
-                strategicRagStatus = if (totalProgress > 80) RAGStatus.GREEN else if (totalProgress > 50) RAGStatus.AMBER else RAGStatus.RED,
+                strategicRagStatus = when {
+                    totalProgress > 80 -> RAGStatus.GREEN
+                    totalProgress > 50 -> RAGStatus.AMBER
+                    else -> RAGStatus.RED
+                },
                 netProgressPercentage = totalProgress,
-                strategicGrowthHours = workPackages.size * 10.0, // Mock calculation
-                businessAsUsualHours = workPackages.size * 5.0,  // Mock calculation
-                milestones = milestones,
-                risks = listOf(
-                    Risk("Supply Chain Delay", 4, 5) // Example hardcoded risk
-                ),
-                exceptions = exceptions,
-                boardInterventions = listOf(
-                    BoardIntervention("Review resource allocation for delayed work packages.")
-                )
+                trendPercentage = 4.2, // Still mock for now
+                strategicGrowthHours = workPackages.size * 10.0,
+                businessAsUsualHours = workPackages.size * 5.0,
+                milestones = milestones.take(5),
+                risks = listOf(Risk("Supply Chain Delay", 4, 5, RiskLevel.HIGH)),
+                exceptions = exceptions.take(10),
+                boardInterventions = listOf(BoardIntervention("Review resource allocation for delayed work packages."))
             )
         } catch (e: Throwable) {
             println("Failed to fetch from OpenProject: ${e.message}")
-            e.printStackTrace()
-            // Fallback to mock on error
             return MockOpenProjectRepositoryImpl().getDashboardMetrics(baseUrl, apiKey)
+        }
+    }
+
+    private fun isOverdue(dueDate: String): Boolean {
+        // Simple string comparison for YYYY-MM-DD
+        // In a real app, use kotlinx-datetime
+        return false // Placeholder
+    }
+
+    private fun formatMonth(dateStr: String?): String {
+        if (dateStr == null) return "TBD"
+        // dateStr is YYYY-MM-DD
+        return try {
+            val month = dateStr.split("-")[1]
+            when(month) {
+                "01" -> "Jan"
+                "02" -> "Feb"
+                "03" -> "Mar"
+                "04" -> "Apr"
+                "05" -> "May"
+                "06" -> "Jun"
+                "07" -> "Jul"
+                "08" -> "Aug"
+                "09" -> "Sep"
+                "10" -> "Oct"
+                "11" -> "Nov"
+                "12" -> "Dec"
+                else -> "TBD"
+            }
+        } catch (e: Exception) {
+            "TBD"
         }
     }
 }

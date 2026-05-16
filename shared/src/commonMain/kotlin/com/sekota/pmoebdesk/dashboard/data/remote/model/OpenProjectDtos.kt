@@ -18,9 +18,23 @@ data class EmbeddedWorkPackages(
 data class WorkPackageElement(
     val id: Int,
     val subject: String,
-    val description: Description?,
+    val description: Description? = null,
     val percentageDone: Int? = null,
-    val estimatedTime: String? = null
+    val estimatedTime: String? = null,
+    val dueDate: String? = null,
+    val _links: WorkPackageLinks? = null
+)
+
+@Serializable
+data class WorkPackageLinks(
+    val type: Link? = null,
+    val status: Link? = null
+)
+
+@Serializable
+data class Link(
+    val href: String,
+    val title: String? = null
 )
 
 @Serializable
