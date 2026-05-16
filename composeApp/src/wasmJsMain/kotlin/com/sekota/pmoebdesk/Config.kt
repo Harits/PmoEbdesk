@@ -10,7 +10,9 @@ import org.w3c.fetch.Response
 data class AppConfig(
     val OPENPROJECT_URL: String,
     val OPENPROJECT_API_KEY: String,
-    val USE_MOCK_DATA: Boolean = false
+    val USE_MOCK_DATA: Boolean = false,
+    val PROJECT_PARENT_ID: Int? = null,
+    val ALLOWED_PROJECT_IDS: String? = null
 )
 
 @OptIn(kotlin.js.ExperimentalWasmJsInterop::class)

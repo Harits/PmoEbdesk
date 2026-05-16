@@ -14,9 +14,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.sekota.pmoebdesk.core.ui.OutlineColor
+import com.sekota.pmoebdesk.core.ui.PrimaryNavy
+
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.SolidColor
 
 @Composable
-fun SearchBarFull() {
+fun SearchBarFull(query: String, onQueryChange: (String) -> Unit) {
     Surface(
         color = Color.White,
         shape = RoundedCornerShape(8.dp),
@@ -32,7 +40,20 @@ fun SearchBarFull() {
                 drawLine(color = Color.Gray, start = center, end = center * 1.8f, strokeWidth = 2.dp.toPx())
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Text("Search projects...", color = Color.Gray, style = MaterialTheme.typography.bodyLarge)
+            
+            Box(modifier = Modifier.weight(1f)) {
+                if (query.isEmpty()) {
+                    Text("Search projects...", color = Color.Gray, style = MaterialTheme.typography.bodyLarge)
+                }
+                BasicTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
+                    cursorBrush = SolidColor(PrimaryNavy),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
         }
     }
 }

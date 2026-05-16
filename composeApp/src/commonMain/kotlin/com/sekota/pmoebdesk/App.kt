@@ -15,30 +15,46 @@ import com.sekota.pmoebdesk.projects.ui.ProjectSearchScreen
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.Devices.DESKTOP
 
+import com.sekota.pmoebdesk.projects.domain.model.Project
+import com.sekota.pmoebdesk.projects.domain.model.ProjectStatus
+import kotlinx.coroutines.delay
+
 @Composable
-fun App(metrics: DashboardMetrics?) {
+fun App(
+    metrics: DashboardMetrics?,
+    projects: List<Project>,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    isSearching: Boolean = false
+) {
     DashboardTheme {
         var currentScreen by remember { mutableStateOf("dashboard") }
         
-        if (metrics != null) {
-            Column(modifier = Modifier.fillMaxSize().background(MainBackground)) {
-                TopBar(
-                    onSearchFocus = { currentScreen = "search" },
-                    onTitleClick = { currentScreen = "dashboard" }
-                )
-                Box(modifier = Modifier.weight(1f)) {
-                    if (currentScreen == "dashboard") {
+        Column(modifier = Modifier.fillMaxSize().background(MainBackground)) {
+            TopBar(
+                onSearchFocus = { currentScreen = "search" },
+                onTitleClick = { currentScreen = "dashboard" }
+            )
+            Box(modifier = Modifier.weight(1f)) {
+                if (currentScreen == "dashboard") {
+                    if (metrics != null) {
                         DashboardContent(metrics, modifier = Modifier.fillMaxSize())
                     } else {
-                        ProjectSearchScreen(modifier = Modifier.fillMaxSize())
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
                     }
+                } else {
+                    ProjectSearchScreen(
+                        projects = projects,
+                        query = searchQuery,
+                        onQueryChange = onSearchQueryChange,
+                        isLoading = isSearching,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
-                Footer()
             }
-        } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            Footer()
         }
     }
 }
@@ -57,8 +73,8 @@ fun DashboardPreview() {
             Milestone("Q3 Audit", "DEC")
         ),
         risks = listOf(
-            Risk("Resource Attrition", 4, 5),
-            Risk("Dependency Delay", 3, 4)
+            Risk("Resource Attrition", 4, 5, RiskLevel.MEDIUM),
+            Risk("Dependency Delay", 3, 4, RiskLevel.LOW)
         ),
         exceptions = listOf(
             ProjectException("Project Orion", "Hiring 2 senior architects to resolve technical bottleneck."),
@@ -70,13 +86,25 @@ fun DashboardPreview() {
             BoardIntervention("Authorize $50k contingency fund release for Orion licensing fees.")
         )
     )
-    App(metrics = sampleMetrics)
+    App(
+        metrics = sampleMetrics,
+        projects = emptyList(),
+        searchQuery = "",
+        onSearchQueryChange = {}
+    )
 }
 
 @Preview(device = DESKTOP)
 @Composable
 fun SearchPreview() {
     DashboardTheme {
-        ProjectSearchScreen(modifier = Modifier.fillMaxSize().background(MainBackground))
+        ProjectSearchScreen(
+            projects = listOf(
+                Project(1, "p1", "Project Orion", ProjectStatus.ON_TRACK, "$1.2M", "Dec 2024", "Jan 15, 2024", 5)
+            ),
+            query = "",
+            onQueryChange = {},
+            modifier = Modifier.fillMaxSize().background(MainBackground)
+        )
     }
 }
