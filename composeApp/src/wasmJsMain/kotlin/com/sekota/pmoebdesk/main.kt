@@ -93,10 +93,32 @@ fun AppContainer(
     val scope = rememberCoroutineScope()
     var searchJob by remember { mutableStateOf<Job?>(null) }
 
-    LaunchedEffect(selectedProject) {
+    LaunchedEffect(selectedProject, projects) {
+        val currentAllowedIds = if (selectedProject != null) {
+            listOf(selectedProject!!.id)
+        } else if (projects.isNotEmpty()) {
+            projects.map { it.id }
+        } else {
+            null // Wait for projects to load or config to be ready
+        }
+
+        if (currentAllowedIds == null && !config.USE_MOCK_DATA) {
+            // If we have no IDs and we aren't in mock mode, don't trigger a fetch yet.
+            // This prevents the initial "no project" state from falling back to mock.
+            return@LaunchedEffect
+        }
+
         try {
-            metrics = dashboardRepo.getDashboardMetrics(config.OPENPROJECT_URL, config.OPENPROJECT_API_KEY, selectedProject?.id)
+            metrics = dashboardRepo.getDashboardMetrics(
+                baseUrl = config.OPENPROJECT_URL,
+                apiKey = config.OPENPROJECT_API_KEY,
+                projectId = selectedProject?.id,
+                allowedProjectIds = currentAllowedIds
+            )
         } catch (e: Throwable) {
+            if (e !is kotlinx.coroutines.CancellationException) {
+                println("Dashboard fetch failed: ${e.message}")
+            }
             error = e.message ?: "Unknown error"
         }
     }

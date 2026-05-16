@@ -16,8 +16,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sekota.pmoebdesk.core.ui.PrimaryNavy
 
+import com.sekota.pmoebdesk.dashboard.domain.model.Milestone
+
 @Composable
-fun CriticalPathRoadmapCard(modifier: Modifier = Modifier) {
+fun CriticalPathRoadmapCard(milestones: List<Milestone>, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.height(300.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -31,9 +33,13 @@ fun CriticalPathRoadmapCard(modifier: Modifier = Modifier) {
             Box(modifier = Modifier.fillMaxWidth().height(80.dp)) {
                 HorizontalDivider(modifier = Modifier.align(Alignment.Center).padding(horizontal = 40.dp), thickness = 1.dp, color = Color.LightGray)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                    TimelinePoint("OCT", "Product Launch", isCompleted = true)
-                    TimelinePoint("NOV", "Market Entry", isCompleted = true)
-                    TimelinePoint("DEC", "Q3 Audit", isCompleted = false)
+                    if (milestones.isEmpty()) {
+                        Text("No upcoming milestones", modifier = Modifier.align(Alignment.CenterVertically), color = Color.Gray)
+                    } else {
+                        milestones.take(4).forEach { milestone ->
+                            TimelinePoint(milestone.date.uppercase(), milestone.title, isCompleted = false)
+                        }
+                    }
                 }
             }
             
@@ -51,8 +57,13 @@ fun CriticalPathRoadmapCard(modifier: Modifier = Modifier) {
                         drawLine(color = PrimaryNavy, start = center.copy(y = center.y - 1.dp.toPx()), end = center.copy(y = center.y + 5.dp.toPx()), strokeWidth = 2.dp.toPx())
                     }
                     Spacer(modifier = Modifier.width(12.dp))
+                    val statusText = if (milestones.isNotEmpty()) {
+                        "Next milestone '${milestones.first().title}' is currently tracking on schedule."
+                    } else {
+                        "No critical path delays reported."
+                    }
                     Text(
-                        "Next milestone 'Market Entry' is currently tracking 2 days ahead of schedule.",
+                        statusText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Black
                     )

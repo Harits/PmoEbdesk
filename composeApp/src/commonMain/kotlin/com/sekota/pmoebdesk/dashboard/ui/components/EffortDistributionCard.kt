@@ -22,7 +22,16 @@ import androidx.compose.ui.unit.sp
 import com.sekota.pmoebdesk.core.ui.PrimaryNavy
 
 @Composable
-fun EffortDistributionCard(modifier: Modifier = Modifier) {
+fun EffortDistributionCard(
+    strategicHours: Double,
+    bauHours: Double,
+    modifier: Modifier = Modifier
+) {
+    val total = strategicHours + bauHours
+    val strategicPercentage = if (total > 0) (strategicHours / total) * 100 else 60.0
+    val bauPercentage = if (total > 0) (bauHours / total) * 100 else 40.0
+    val sweepAngle = (strategicPercentage / 100 * 360).toFloat()
+
     Card(
         modifier = modifier.height(220.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -51,21 +60,21 @@ fun EffortDistributionCard(modifier: Modifier = Modifier) {
                         drawArc(
                             color = PrimaryNavy,
                             startAngle = -90f,
-                            sweepAngle = 216f, // 60%
+                            sweepAngle = sweepAngle,
                             useCenter = false,
                             style = Stroke(width = 15.dp.toPx(), cap = StrokeCap.Round)
                         )
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Ratio", fontSize = 10.sp, color = Color.Gray)
-                        Text("3:2", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text("Strategic", fontSize = 10.sp, color = Color.Gray)
+                        Text("${strategicPercentage.toInt()}%", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
                 Spacer(modifier = Modifier.width(32.dp))
                 Column {
-                    LegendItem(PrimaryNavy, "60% Strategic Growth", isSolid = true)
+                    LegendItem(PrimaryNavy, "${strategicPercentage.toInt()}% Strategic Growth", isSolid = true)
                     Spacer(modifier = Modifier.height(12.dp))
-                    LegendItem(Color.Gray, "40% BAU Operations", isSolid = false)
+                    LegendItem(Color.Gray, "${bauPercentage.toInt()}% BAU Operations", isSolid = false)
                 }
             }
         }

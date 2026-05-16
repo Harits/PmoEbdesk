@@ -17,8 +17,11 @@ import androidx.compose.ui.unit.sp
 import com.sekota.pmoebdesk.core.ui.PrimaryNavy
 import com.sekota.pmoebdesk.core.ui.StatusRedBackground
 
+import com.sekota.pmoebdesk.dashboard.domain.model.Risk
+import com.sekota.pmoebdesk.dashboard.domain.model.RiskLevel
+
 @Composable
-fun RiskHeatmapCard(modifier: Modifier = Modifier) {
+fun RiskHeatmapCard(risks: List<Risk>, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.height(300.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -38,7 +41,7 @@ fun RiskHeatmapCard(modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        GridMatrix()
+                        GridMatrix(risks)
                     }
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Low", fontSize = 10.sp, color = Color.Gray)
@@ -52,24 +55,41 @@ fun RiskHeatmapCard(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun GridMatrix() {
+fun GridMatrix(risks: List<Risk>) {
+    // Basic mapping: 3 rows (High, Med, Low), 4 columns
+    // We'll just show the count of risks in each cell if possible, 
+    // but for simplicity let's just show total risks in the top right for High/High
+    val highRisks = risks.count { it.level == RiskLevel.HIGH }
+    val medRisks = risks.count { it.level == RiskLevel.MEDIUM }
+    
     Column(modifier = Modifier.fillMaxSize()) {
         for (i in 0 until 3) {
             Row(modifier = Modifier.weight(1f)) {
                 for (j in 0 until 4) {
+                    val isHotCell = (i == 0) && (j == 3)
+                    val isMedCell = (i == 1) && (j == 2)
+                    
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
                             .padding(1.dp)
                             .background(
-                                if ((i == 0) && (j == 3)) StatusRedBackground else Color(0xFFF1F3F4)
+                                when {
+                                    isHotCell && highRisks > 0 -> StatusRedBackground
+                                    isMedCell && medRisks > 0 -> Color(0xFFFFF3E0)
+                                    else -> Color(0xFFF1F3F4)
+                                }
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        if ((i == 0) && (j == 3)) {
+                        if (isHotCell && highRisks > 0) {
                             Box(modifier = Modifier.size(24.dp).background(Color(0xFFC62828), CircleShape), contentAlignment = Alignment.Center) {
-                                Text("3", color = Color.White, fontSize = 10.sp)
+                                Text(highRisks.toString(), color = Color.White, fontSize = 10.sp)
+                            }
+                        } else if (isMedCell && medRisks > 0) {
+                            Box(modifier = Modifier.size(24.dp).background(Color(0xFFEF6C00), CircleShape), contentAlignment = Alignment.Center) {
+                                Text(medRisks.toString(), color = Color.White, fontSize = 10.sp)
                             }
                         }
                     }

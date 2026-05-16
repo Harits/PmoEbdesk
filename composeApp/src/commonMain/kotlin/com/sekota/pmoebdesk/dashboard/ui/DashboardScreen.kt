@@ -23,13 +23,17 @@ fun DashboardContent(metrics: DashboardMetrics, modifier: Modifier = Modifier) {
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 NetProgressCard(metrics.netProgressPercentage, modifier = Modifier.weight(1f))
-                EffortDistributionCard(modifier = Modifier.weight(1f))
+                EffortDistributionCard(
+                    strategicHours = metrics.strategicGrowthHours,
+                    bauHours = metrics.businessAsUsualHours,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                CriticalPathRoadmapCard(modifier = Modifier.weight(1.5f))
-                RiskHeatmapCard(modifier = Modifier.weight(1f))
+                CriticalPathRoadmapCard(metrics.milestones, modifier = Modifier.weight(1.5f))
+                RiskHeatmapCard(metrics.risks, modifier = Modifier.weight(1f))
             }
         }
         item {
