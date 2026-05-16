@@ -1,4 +1,7 @@
-package com.sekota.pmoebdesk
+package com.sekota.pmoebdesk.features.dashboard.data
+
+import com.sekota.pmoebdesk.features.dashboard.domain.*
+
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout

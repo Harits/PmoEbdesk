@@ -1,4 +1,5 @@
 package com.sekota.pmoebdesk
+import com.sekota.pmoebdesk.features.dashboard.domain.*
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

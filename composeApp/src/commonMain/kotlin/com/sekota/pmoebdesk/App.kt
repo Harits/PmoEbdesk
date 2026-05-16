@@ -1,132 +1,99 @@
 package com.sekota.pmoebdesk
 
-import androidx.compose.foundation.*
+import org.koin.compose.viewmodel.koinViewModel
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.Devices.DESKTOP
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.geometry.Offset
 
-// Stitch Design Tokens
-val PrimaryNavy = Color(0xFF000666)
+
+import com.sekota.pmoebdesk.features.dashboard.presentation.DashboardViewModel
+import com.sekota.pmoebdesk.features.dashboard.presentation.DashboardState
+import com.sekota.pmoebdesk.features.dashboard.domain.*
+import com.sekota.pmoebdesk.features.projects.presentation.ProjectSearchViewModel
+import com.sekota.pmoebdesk.features.projects.presentation.ProjectSearchState
+
+val PrimaryNavy = Color(0xFF1A237E)
 val MainBackground = Color(0xFFF8F9FA)
-val SurfaceWhite = Color(0xFFFFFFFF)
-val OnSurfaceDark = Color(0xFF191C1D)
-val OutlineColor = Color(0xFF767683)
-val OutlineVariant = Color(0xFFC6C5D4)
-val ErrorColor = Color(0xFFBA1A1A)
-
-val StatusGreen = Color(0xFF4CAF50)
-val StatusGreenBackground = Color(0xFFE8F5E9)
-val StatusAmber = Color(0xFFF57C00)
-val StatusAmberBackground = Color(0xFFFFF3E0)
-val StatusRed = Color(0xFFD32F2F)
-val StatusRedBackground = Color(0xFFFFEBEE)
-val CardDarkNavy = Color(0xFF000A3A)
+val StatusRed = Color(0xFFBA1A1A)
+val StatusRedBackground = Color(0xFFFFDAD6)
+val StatusAmber = Color(0xFFB77200)
+val StatusAmberBackground = Color(0xFFFFE0B2)
+val StatusGreen = Color(0xFF2E7D32)
+val StatusGreenBackground = Color(0xFFC8E6C9)
+val CardDarkNavy = Color(0xFF001E24)
 
 @Composable
 fun DashboardTheme(content: @Composable () -> Unit) {
     val colorScheme = lightColorScheme(
         primary = PrimaryNavy,
-        onPrimary = Color.White,
-        surface = SurfaceWhite,
-        onSurface = OnSurfaceDark,
         background = MainBackground,
-        onBackground = OnSurfaceDark,
-        outlineVariant = OutlineVariant,
+        surface = Color.White,
+        error = StatusRed
     )
-
-    val typography = Typography(
-        displayLarge = MaterialTheme.typography.displayLarge.copy(
-            fontSize = 57.sp,
-            fontWeight = FontWeight.Bold,
-            color = PrimaryNavy,
-            lineHeight = 64.sp,
-            letterSpacing = (-0.25).sp
-        ),
-        headlineLarge = MaterialTheme.typography.headlineLarge.copy(
-            fontSize = 32.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = PrimaryNavy,
-            lineHeight = 40.sp
-        ),
-        titleLarge = MaterialTheme.typography.titleLarge.copy(
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Medium,
-            lineHeight = 28.sp
-        ),
-        bodyLarge = MaterialTheme.typography.bodyLarge.copy(
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Normal,
-            lineHeight = 24.sp
-        ),
-        bodyMedium = MaterialTheme.typography.bodyMedium.copy(
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Normal,
-            lineHeight = 20.sp
-        ),
-        labelLarge = MaterialTheme.typography.labelLarge.copy(
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            lineHeight = 16.sp,
-            letterSpacing = 0.5.sp
-        ),
-        labelMedium = MaterialTheme.typography.labelMedium.copy(
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            lineHeight = 20.sp,
-            letterSpacing = 0.1.sp
-        ) // data-mono mapping
-    )
-
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = typography,
-        shapes = Shapes(
-            small = RoundedCornerShape(4.dp), // sm
-            medium = RoundedCornerShape(8.dp), // DEFAULT / medium
-            large = RoundedCornerShape(16.dp)  // lg
-        ),
-        content = content
-    )
+    MaterialTheme(colorScheme = colorScheme, content = content)
 }
 
 @Composable
-fun App(metrics: DashboardMetrics?) {
+fun App(
+    viewModel: DashboardViewModel = koinViewModel(),
+    projectSearchViewModel: ProjectSearchViewModel = koinViewModel(),
+    baseUrl: String,
+    apiKey: String
+) {
+    val state by viewModel.state.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadDashboard(baseUrl, apiKey)
+    }
+
     DashboardTheme {
         var currentScreen by remember { mutableStateOf("dashboard") }
         
-        if (metrics != null) {
-            Column(modifier = Modifier.fillMaxSize().background(MainBackground)) {
-                TopBar(
-                    onSearchFocus = { currentScreen = "search" },
-                    onTitleClick = { currentScreen = "dashboard" }
-                )
-                Box(modifier = Modifier.weight(1f)) {
-                    if (currentScreen == "dashboard") {
-                        DashboardContent(metrics, modifier = Modifier.fillMaxSize())
-                    } else {
-                        ProjectSearchScreen(modifier = Modifier.fillMaxSize())
-                    }
+        when (val currentState = state) {
+            is DashboardState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-                Footer()
             }
-        } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+            is DashboardState.Error -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Error: ${currentState.message}", color = MaterialTheme.colorScheme.error)
+                }
+            }
+            is DashboardState.Success -> {
+                val metrics = currentState.metrics
+                Column(modifier = Modifier.fillMaxSize().background(MainBackground)) {
+                    TopBar(
+                        onSearchFocus = { currentScreen = "search" },
+                        onTitleClick = { currentScreen = "dashboard" }
+                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (currentScreen == "dashboard") {
+                            DashboardContent(metrics, modifier = Modifier.fillMaxSize())
+                        } else {
+                            ProjectSearchScreen(projectSearchViewModel, baseUrl, apiKey, modifier = Modifier.fillMaxSize())
+                        }
+                    }
+                    Footer()
+                }
             }
         }
     }
@@ -147,7 +114,6 @@ fun Footer() {
         )
     }
 }
-
 
 @Composable
 fun TopBar(onSearchFocus: () -> Unit = {}, onTitleClick: () -> Unit = {}) {
@@ -170,40 +136,39 @@ fun TopBar(onSearchFocus: () -> Unit = {}, onTitleClick: () -> Unit = {}) {
                     .background(PrimaryNavy, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                // Simplified logo icon
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Box(modifier = Modifier.size(width = 20.dp, height = 2.dp).background(Color.White))
-                    Box(modifier = Modifier.size(width = 14.dp, height = 2.dp).background(Color.White))
-                    Box(modifier = Modifier.size(width = 20.dp, height = 2.dp).background(Color.White))
+                // Mock logo
+                Canvas(modifier = Modifier.size(24.dp)) {
+                    drawRect(color = Color.White, topLeft = Offset(4.dp.toPx(), 4.dp.toPx()), size = androidx.compose.ui.geometry.Size(6.dp.toPx(), 16.dp.toPx()))
+                    drawRect(color = Color.White.copy(alpha = 0.5f), topLeft = Offset(14.dp.toPx(), 10.dp.toPx()), size = androidx.compose.ui.geometry.Size(6.dp.toPx(), 10.dp.toPx()))
                 }
             }
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                "PMO Strategic Oversight",
-                style = MaterialTheme.typography.headlineLarge,
-                color = PrimaryNavy,
-                fontWeight = FontWeight.Bold
+                "Executive Oversight System",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = PrimaryNavy
             )
         }
         
+        // Search bar mock for TopBar
         Surface(
-            color = Color(0xFFF1F3F4),
-            shape = RoundedCornerShape(24.dp),
             modifier = Modifier
-                .width(360.dp)
-                .height(44.dp)
-                .clickable(onClick = onSearchFocus)
+                .width(300.dp)
+                .height(40.dp)
+                .clickable(onClick = onSearchFocus),
+            shape = RoundedCornerShape(8.dp),
+            color = MainBackground
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 16.dp)
             ) {
-                // Search icon placeholder
-                Canvas(modifier = Modifier.size(18.dp)) {
-                    drawCircle(color = Color.Gray, radius = size.minDimension / 3, style = Stroke(width = 2.dp.toPx()))
-                    drawLine(color = Color.Gray, start = center, end = center * 1.8f, strokeWidth = 2.dp.toPx())
+                Canvas(modifier = Modifier.size(16.dp)) {
+                    drawCircle(color = Color.Gray, radius = 5.dp.toPx(), center = Offset(6.dp.toPx(), 6.dp.toPx()), style = Stroke(width = 1.5.dp.toPx()))
+                    drawLine(color = Color.Gray, start = Offset(10.dp.toPx(), 10.dp.toPx()), end = Offset(14.dp.toPx(), 14.dp.toPx()), strokeWidth = 1.5.dp.toPx())
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text("Search projects...", color = Color.Gray, fontSize = 14.sp)
             }
         }
@@ -211,107 +176,152 @@ fun TopBar(onSearchFocus: () -> Unit = {}, onTitleClick: () -> Unit = {}) {
 }
 
 @Composable
-fun ProjectSearchScreen(modifier: Modifier = Modifier) {
+fun ProjectSearchScreen(viewModel: ProjectSearchViewModel, baseUrl: String, apiKey: String, modifier: Modifier = Modifier) {
+    val state by viewModel.state.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val statusFilter by viewModel.statusFilter.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.initialize(baseUrl, apiKey)
+    }
+
     LazyColumn(
         modifier = modifier.padding(32.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
-            SearchBarFull()
+            SearchBarFull(query = searchQuery, onQueryChange = { viewModel.onQueryChanged(it) })
         }
         item {
-            FilterBar()
+            FilterBar(currentFilter = statusFilter, onFilterChange = { viewModel.onFilterChanged(it) })
         }
-        item {
-            ProjectCard(
-                name = "Project Orion",
-                status = "On Track",
-                statusColor = StatusGreen,
-                statusBg = StatusGreenBackground,
-                budget = "$1.2M",
-                deadline = "Dec 2024",
-                startedDate = "Jan 15, 2024",
-                teamCount = 5
-            )
-        }
-        item {
-            ProjectCard(
-                name = "Nexus Integration",
-                status = "At Risk",
-                statusColor = StatusAmber,
-                statusBg = StatusAmberBackground,
-                budget = "$850k",
-                deadline = "Oct 2024",
-                startedDate = "Mar 02, 2024",
-                teamCount = 3
-            )
-        }
-        item {
-            ProjectCard(
-                name = "Security Audit",
-                status = "Critical",
-                statusColor = StatusRed,
-                statusBg = StatusRedBackground,
-                budget = "$450k",
-                deadline = "Aug 2024",
-                startedDate = "Feb 12, 2024",
-                isWarning = true
-            )
-        }
-        item {
-            ProjectCard(
-                name = "Data Migration",
-                status = "On Track",
-                statusColor = StatusGreen,
-                statusBg = StatusGreenBackground,
-                budget = "$2.1M",
-                deadline = "Mar 2025",
-                startedDate = "May 20, 2024",
-                teamCount = 1
-            )
+
+        when (val currentState = state) {
+            is ProjectSearchState.Loading -> {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
+            is ProjectSearchState.Error -> {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        Text("Error: ${currentState.message}", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
+            is ProjectSearchState.Success -> {
+                if (currentState.projects.isEmpty()) {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                            Text("No projects found.")
+                        }
+                    }
+                } else {
+                    items(currentState.projects.size) { index ->
+                        val project = currentState.projects[index]
+                        val statusColor = when(project.statusColorType) {
+                            RAGStatus.GREEN -> StatusGreen
+                            RAGStatus.AMBER -> StatusAmber
+                            RAGStatus.RED -> StatusRed
+                        }
+                        val statusBg = when(project.statusColorType) {
+                            RAGStatus.GREEN -> StatusGreenBackground
+                            RAGStatus.AMBER -> StatusAmberBackground
+                            RAGStatus.RED -> StatusRedBackground
+                        }
+
+                        ProjectCard(
+                            name = project.name,
+                            status = project.status,
+                            statusColor = statusColor,
+                            statusBg = statusBg,
+                            budget = project.budget,
+                            deadline = project.deadline,
+                            startedDate = project.startedDate,
+                            teamCount = project.teamCount,
+                            isWarning = project.isWarning
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-fun SearchBarFull() {
+fun SearchBarFull(query: String, onQueryChange: (String) -> Unit) {
     Surface(
+        modifier = Modifier.fillMaxWidth().height(56.dp),
+        shape = RoundedCornerShape(12.dp),
         color = Color.White,
-        shape = RoundedCornerShape(8.dp), // rounded-md (8px) per DESIGN.md text
-        border = BorderStroke(1.dp, OutlineColor),
-        modifier = Modifier.fillMaxWidth().height(56.dp)
+        shadowElevation = 2.dp
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 16.dp).fillMaxSize()
+        ) {
+            Canvas(modifier = Modifier.size(20.dp)) {
+                drawCircle(color = Color.Gray, radius = 6.dp.toPx(), center = Offset(8.dp.toPx(), 8.dp.toPx()), style = Stroke(width = 2.dp.toPx()))
+                drawLine(color = Color.Gray, start = Offset(13.dp.toPx(), 13.dp.toPx()), end = Offset(18.dp.toPx(), 18.dp.toPx()), strokeWidth = 2.dp.toPx())
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = TextStyle(fontSize = 14.sp, color = PrimaryNavy),
+                decorationBox = { innerTextField ->
+                    if (query.isEmpty()) {
+                        Text("Search projects...", color = Color.Gray, fontSize = 14.sp)
+                    }
+                    innerTextField()
+                }
+            )
+        }
+    }
+}
+
+
+
+
+@Composable
+fun FilterBar(currentFilter: String, onFilterChange: (String) -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Canvas(modifier = Modifier.size(20.dp)) {
-                drawCircle(color = Color.Gray, radius = size.minDimension / 3, style = Stroke(width = 2.dp.toPx()))
-                drawLine(color = Color.Gray, start = center, end = center * 1.8f, strokeWidth = 2.dp.toPx())
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val filters = listOf("All", "On Track", "At Risk", "Critical")
+                filters.forEach { filter ->
+                    val isSelected = filter == currentFilter
+                    Surface(
+                        modifier = Modifier.clickable { onFilterChange(filter) },
+                        color = if (isSelected) PrimaryNavy else Color.Transparent,
+                        shape = RoundedCornerShape(24.dp),
+                        border = if (isSelected) null else BorderStroke(1.dp, Color.LightGray)
+                    ) {
+                        Text(
+                            text = filter,
+                            color = if (isSelected) Color.White else Color.DarkGray,
+                            fontSize = 13.sp,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
+                }
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Text("Search projects...", color = Color.Gray, style = MaterialTheme.typography.bodyLarge)
-        }
-    }
-}
 
-@Composable
-fun FilterBar() {
-    Surface(
-        color = Color(0xFFF1F3F4),
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.fillMaxWidth().height(48.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("Filter by Status", color = Color.DarkGray, style = MaterialTheme.typography.bodyMedium)
-            Canvas(modifier = Modifier.size(20.dp)) {
-                drawLine(color = Color.Black, start = androidx.compose.ui.geometry.Offset(2.dp.toPx(), 6.dp.toPx()), end = androidx.compose.ui.geometry.Offset(18.dp.toPx(), 6.dp.toPx()), strokeWidth = 2.dp.toPx())
-                drawLine(color = Color.Black, start = androidx.compose.ui.geometry.Offset(5.dp.toPx(), 10.dp.toPx()), end = androidx.compose.ui.geometry.Offset(15.dp.toPx(), 10.dp.toPx()), strokeWidth = 2.dp.toPx())
-                drawLine(color = Color.Black, start = androidx.compose.ui.geometry.Offset(8.dp.toPx(), 14.dp.toPx()), end = androidx.compose.ui.geometry.Offset(12.dp.toPx(), 14.dp.toPx()), strokeWidth = 2.dp.toPx())
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Sort by:", color = Color.Gray, fontSize = 13.sp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Priority", color = PrimaryNavy, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -329,84 +339,84 @@ fun ProjectCard(
     teamCount: Int = 0,
     isWarning: Boolean = false
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { isExpanded = !isExpanded },
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(16.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = if (isWarning) BorderStroke(1.dp, StatusRed.copy(alpha = 0.3f)) else null,
+        shape = RoundedCornerShape(12.dp)
     ) {
-        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-            // Status stripe
-            Box(modifier = Modifier.fillMaxHeight().width(6.dp).background(statusColor))
-            
-            Column(modifier = Modifier.padding(24.dp).weight(1f)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Column {
-                        Text(name, style = MaterialTheme.typography.headlineLarge, color = PrimaryNavy)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Surface(color = statusBg, shape = RoundedCornerShape(24.dp)) {
-                            Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(8.dp).background(statusColor, CircleShape))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(status, color = statusColor, style = MaterialTheme.typography.labelLarge)
-                            }
-                        }
-                    }
-                    // More vert icon
-                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
-                        Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
-                        Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column {
+                    Text(name, style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Surface(
+                        color = statusBg,
+                        shape = RoundedCornerShape(24.dp)
+                    ) {
+                        Text(
+                            status,
+                            color = statusColor,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        )
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(24.dp))
-                HorizontalDivider(color = Color(0xFFF1F3F4))
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(budget, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Budget", fontSize = 12.sp, color = Color.Gray)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                     Column {
-                        Text("BUDGET", style = MaterialTheme.typography.labelLarge, color = Color.Gray)
-                        Text(budget, style = MaterialTheme.typography.labelMedium, color = Color.Black) // Using data-mono mapping
+                        Text("Deadline", fontSize = 12.sp, color = Color.Gray)
+                        Text(deadline, fontWeight = FontWeight.SemiBold)
                     }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("DEADLINE", style = MaterialTheme.typography.labelLarge, color = Color.Gray)
-                        Text(deadline, style = MaterialTheme.typography.labelMedium, color = Color.Black) // Using data-mono mapping
+                    Column {
+                        Text("Started", fontSize = 12.sp, color = Color.Gray)
+                        Text(startedDate, fontWeight = FontWeight.SemiBold)
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(color = Color(0xFFF1F3F4))
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Started: $startedDate", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                if (teamCount > 0) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("$teamCount Team Members", fontSize = 12.sp, color = Color.Gray)
+                    }
+                }
+            }
+
+            AnimatedVisibility(visible = isExpanded) {
+                Column(modifier = Modifier.padding(top = 24.dp)) {
+                    HorizontalDivider(color = Color(0xFFF1F4F8))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Project Details", fontWeight = FontWeight.Bold, color = PrimaryNavy)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Detailed description and metrics for $name would appear here. This section expands to show more granular data, recent updates, and specific risk factors.", fontSize = 14.sp, color = Color.DarkGray)
                     
-                    if (isWarning) {
-                        // Warning icon
-                        Canvas(modifier = Modifier.size(24.dp)) {
-                            val path = androidx.compose.ui.graphics.Path().apply {
-                                moveTo(size.width / 2, 2.dp.toPx())
-                                lineTo(size.width - 2.dp.toPx(), size.height - 2.dp.toPx())
-                                lineTo(2.dp.toPx(), size.height - 2.dp.toPx())
-                                close()
-                            }
-                            drawPath(path, color = StatusRed)
-                            drawRect(color = Color.White, size = androidx.compose.ui.geometry.Size(2.dp.toPx(), 6.dp.toPx()), topLeft = androidx.compose.ui.geometry.Offset(center.x - 1.dp.toPx(), center.y - 1.dp.toPx()))
-                            drawCircle(color = Color.White, radius = 1.dp.toPx(), center = center.copy(y = center.y + 7.dp.toPx()))
-                        }
-                    } else {
-                        // Avatar stack placeholder
-                        Row(horizontalArrangement = Arrangement.spacedBy((-8).dp)) {
-                            repeat(minOf(teamCount, 3)) {
-                                Box(modifier = Modifier.size(32.dp).border(2.dp, Color.White, CircleShape).clip(CircleShape).background(Color.LightGray))
-                            }
-                            if (teamCount > 3) {
-                                Box(modifier = Modifier.size(32.dp).border(2.dp, Color.White, CircleShape).clip(CircleShape).background(PrimaryNavy), contentAlignment = Alignment.Center) {
-                                    Text("+${teamCount - 3}", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {},
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryNavy),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("View Full Dashboard")
                     }
                 }
             }
@@ -424,19 +434,19 @@ fun DashboardContent(metrics: DashboardMetrics, modifier: Modifier = Modifier) {
             PortfolioHealthBanner()
         }
         item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 NetProgressCard(metrics.netProgressPercentage, modifier = Modifier.weight(1f))
                 EffortDistributionCard(modifier = Modifier.weight(1f))
             }
         }
         item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                CriticalPathRoadmapCard(modifier = Modifier.weight(1.5f))
+            Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                CriticalPathRoadmapCard(modifier = Modifier.weight(2f))
                 RiskHeatmapCard(modifier = Modifier.weight(1f))
             }
         }
         item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 RedListTableCard(metrics.exceptions, modifier = Modifier.weight(2f))
                 BoardInterventionsSidebar(metrics.boardInterventions, modifier = Modifier.weight(1f))
             }
@@ -448,47 +458,29 @@ fun DashboardContent(metrics: DashboardMetrics, modifier: Modifier = Modifier) {
 fun PortfolioHealthBanner() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(16.dp)
+        colors = CardDefaults.cardColors(containerColor = PrimaryNavy),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.padding(24.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier.size(56.dp).background(StatusGreenBackground, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                // Checkmark icon
-                Canvas(modifier = Modifier.size(24.dp)) {
-                    val path = androidx.compose.ui.graphics.Path().apply {
-                        moveTo(size.width * 0.2f, size.height * 0.5f)
-                        lineTo(size.width * 0.45f, size.height * 0.75f)
-                        lineTo(size.width * 0.8f, size.height * 0.25f)
-                    }
-                    drawPath(path, color = StatusGreen, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
-                }
-            }
-            Spacer(modifier = Modifier.width(24.dp))
             Column {
-                Text("Portfolio Health", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-                Text("Strategic RAG Status: Green", style = MaterialTheme.typography.headlineLarge, color = Color.Black)
+                Text("Strategic Portfolio Health", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Q3 Operational Overview", style = MaterialTheme.typography.headlineMedium, color = Color.White, fontWeight = FontWeight.Bold)
             }
-            Spacer(modifier = Modifier.weight(1f))
             Surface(
-                color = StatusGreenBackground,
+                color = Color.White.copy(alpha = 0.1f),
                 shape = RoundedCornerShape(24.dp)
             ) {
                 Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    // Up arrow icon
-                    Canvas(modifier = Modifier.size(16.dp)) {
-                        drawLine(color = StatusGreen, start = androidx.compose.ui.geometry.Offset(size.width * 0.2f, size.height * 0.8f), end = androidx.compose.ui.geometry.Offset(size.width * 0.8f, size.height * 0.2f), strokeWidth = 2.dp.toPx())
-                        drawLine(color = StatusGreen, start = androidx.compose.ui.geometry.Offset(size.width * 0.4f, size.height * 0.2f), end = androidx.compose.ui.geometry.Offset(size.width * 0.8f, size.height * 0.2f), strokeWidth = 2.dp.toPx())
-                        drawLine(color = StatusGreen, start = androidx.compose.ui.geometry.Offset(size.width * 0.8f, size.height * 0.2f), end = androidx.compose.ui.geometry.Offset(size.width * 0.8f, size.height * 0.6f), strokeWidth = 2.dp.toPx())
+                    Canvas(modifier = Modifier.size(12.dp)) {
+                        drawCircle(color = StatusGreen)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("+4.2% Monthly Uplift", color = StatusGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("System Nominal", color = Color.White, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -498,34 +490,23 @@ fun PortfolioHealthBanner() {
 @Composable
 fun NetProgressCard(progress: Double, modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.height(220.dp),
+        modifier = modifier.height(180.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Net Progress", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
-                // More vert icon placeholder
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
-                    Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
-                    Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+        Column(modifier = Modifier.padding(24.dp).fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
+            Text("Net Progress", style = MaterialTheme.typography.titleMedium, color = Color.Gray)
             Row(verticalAlignment = Alignment.Bottom) {
-                Text("${progress.toInt()}%", style = MaterialTheme.typography.displayLarge, color = PrimaryNavy)
+                Text("$progress%", style = MaterialTheme.typography.displayLarge, color = PrimaryNavy)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("of Year-to-Date Targets", style = MaterialTheme.typography.bodyMedium, color = Color.Gray, modifier = Modifier.padding(bottom = 12.dp))
+                Text("+2.4% vs last month", color = StatusGreen, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
             }
-            Spacer(modifier = Modifier.weight(1f))
             LinearProgressIndicator(
                 progress = { (progress / 100).toFloat() },
-                modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)),
+                modifier = Modifier.fillMaxWidth().height(8.dp),
                 color = PrimaryNavy,
-                trackColor = Color(0xFFF0F0F0),
-                strokeCap = StrokeCap.Round
+                trackColor = Color(0xFFF1F4F8)
             )
         }
     }
@@ -534,49 +515,25 @@ fun NetProgressCard(progress: Double, modifier: Modifier = Modifier) {
 @Composable
 fun EffortDistributionCard(modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.height(220.dp),
+        modifier = modifier.height(180.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Effort Distribution", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
-                // Pie chart icon placeholder
-                Canvas(modifier = Modifier.size(20.dp)) {
-                    drawArc(color = Color.Gray, startAngle = 0f, sweepAngle = 360f, useCenter = true, style = Stroke(width = 1.5.dp.toPx()))
-                    drawArc(color = Color.Gray, startAngle = -90f, sweepAngle = 90f, useCenter = true)
+        Column(modifier = Modifier.padding(24.dp).fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
+            Text("Effort Distribution", style = MaterialTheme.typography.titleMedium, color = Color.Gray)
+
+            // Mock Donut Chart
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Canvas(modifier = Modifier.size(80.dp)) {
+                    drawArc(color = PrimaryNavy, startAngle = -90f, sweepAngle = 240f, useCenter = false, style = Stroke(width = 16.dp.toPx()))
+                    drawArc(color = StatusAmber, startAngle = 150f, sweepAngle = 120f, useCenter = false, style = Stroke(width = 16.dp.toPx()))
                 }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(100.dp), contentAlignment = Alignment.Center) {
-                    Canvas(modifier = Modifier.size(100.dp)) {
-                        drawArc(
-                            color = Color(0xFFF0F0F0),
-                            startAngle = 0f,
-                            sweepAngle = 360f,
-                            useCenter = false,
-                            style = Stroke(width = 15.dp.toPx(), cap = StrokeCap.Round)
-                        )
-                        drawArc(
-                            color = PrimaryNavy,
-                            startAngle = -90f,
-                            sweepAngle = 216f, // 60%
-                            useCenter = false,
-                            style = Stroke(width = 15.dp.toPx(), cap = StrokeCap.Round)
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Ratio", fontSize = 10.sp, color = Color.Gray)
-                        Text("3:2", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    }
-                }
-                Spacer(modifier = Modifier.width(32.dp))
+                Spacer(modifier = Modifier.width(24.dp))
                 Column {
-                    LegendItem(PrimaryNavy, "60% Strategic Growth", isSolid = true)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    LegendItem(Color.Gray, "40% BAU Operations", isSolid = false)
+                    LegendItem(PrimaryNavy, "Strategic Growth (65%)", true)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LegendItem(StatusAmber, "Business As Usual (35%)", false)
                 }
             }
         }
@@ -586,13 +543,12 @@ fun EffortDistributionCard(modifier: Modifier = Modifier) {
 @Composable
 fun LegendItem(color: Color, text: String, isSolid: Boolean) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        if (isSolid) {
-            Box(modifier = Modifier.size(8.dp).background(color, CircleShape))
-        } else {
-            Box(modifier = Modifier.size(8.dp).border(1.dp, color, CircleShape))
+        Canvas(modifier = Modifier.size(12.dp)) {
+            if (isSolid) drawCircle(color = color)
+            else drawCircle(color = color, style = Stroke(width = 2.dp.toPx()))
         }
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color.Black)
+        Text(text, fontSize = 12.sp, color = Color.DarkGray)
     }
 }
 
@@ -606,38 +562,20 @@ fun CriticalPathRoadmapCard(modifier: Modifier = Modifier) {
     ) {
         Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
             Text("Critical Path Roadmap", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            // Timeline
-            Box(modifier = Modifier.fillMaxWidth().height(80.dp)) {
-                HorizontalDivider(modifier = Modifier.align(Alignment.Center).padding(horizontal = 40.dp), thickness = 1.dp, color = Color.LightGray)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                    TimelinePoint("OCT", "Product Launch", isCompleted = true)
-                    TimelinePoint("NOV", "Market Entry", isCompleted = true)
-                    TimelinePoint("DEC", "Q3 Audit", isCompleted = false)
-                }
-            }
-            
             Spacer(modifier = Modifier.height(24.dp))
             
-            Surface(
-                color = Color(0xFFF1F4F8),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    // Info icon placeholder
-                    Canvas(modifier = Modifier.size(20.dp)) {
-                        drawCircle(color = PrimaryNavy, style = Stroke(width = 1.5.dp.toPx()))
-                        drawCircle(color = PrimaryNavy, radius = 1.dp.toPx(), center = center.copy(y = center.y - 4.dp.toPx()))
-                        drawLine(color = PrimaryNavy, start = center.copy(y = center.y - 1.dp.toPx()), end = center.copy(y = center.y + 5.dp.toPx()), strokeWidth = 2.dp.toPx())
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        "Next milestone 'Market Entry' is currently tracking 2 days ahead of schedule.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Black
-                    )
+            // Mock Timeline
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Canvas(modifier = Modifier.fillMaxWidth().height(2.dp)) {
+                    drawLine(color = Color(0xFFF1F4F8), start = Offset(0f, 0f), end = Offset(size.width, 0f), strokeWidth = 4.dp.toPx())
+                    drawLine(color = PrimaryNavy, start = Offset(0f, 0f), end = Offset(size.width * 0.4f, 0f), strokeWidth = 4.dp.toPx())
+                }
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    TimelinePoint("JUL", "Phase 1 Complete", true)
+                    TimelinePoint("AUG", "Security Audit", true)
+                    TimelinePoint("OCT", "Beta Launch", false)
+                    TimelinePoint("DEC", "Q4 Milestone", false)
                 }
             }
         }
@@ -647,14 +585,18 @@ fun CriticalPathRoadmapCard(modifier: Modifier = Modifier) {
 @Composable
 fun TimelinePoint(month: String, title: String, isCompleted: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(24.dp)
-                .background(if (isCompleted) PrimaryNavy else Color.LightGray, CircleShape)
-        )
+        Text(month, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(month, fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
-        Text(title, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Canvas(modifier = Modifier.size(16.dp)) {
+            if (isCompleted) {
+                drawCircle(color = PrimaryNavy)
+            } else {
+                drawCircle(color = Color.White)
+                drawCircle(color = PrimaryNavy, style = Stroke(width = 2.dp.toPx()))
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(title, fontSize = 12.sp, color = if (isCompleted) PrimaryNavy else Color.Gray, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -667,26 +609,20 @@ fun RiskHeatmapCard(modifier: Modifier = Modifier) {
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
-            Text("Risk Heatmap Matrix", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
+            Text("Risk Heatmap", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
             Spacer(modifier = Modifier.height(16.dp))
             
-            Row(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = Modifier.fillMaxHeight().padding(vertical = 12.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                    Text("High", fontSize = 10.sp, color = Color.Gray)
-                    Text("Med", fontSize = 10.sp, color = Color.Gray)
-                    Text("Low", fontSize = 10.sp, color = Color.Gray)
+            // Mock Heatmap Grid
+            Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                GridMatrix()
+                // Mock data points
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    drawCircle(color = StatusRed.copy(alpha = 0.8f), radius = 12.dp.toPx(), center = Offset(size.width * 0.8f, size.height * 0.2f))
+                    drawCircle(color = StatusAmber.copy(alpha = 0.8f), radius = 16.dp.toPx(), center = Offset(size.width * 0.5f, size.height * 0.4f))
+                    drawCircle(color = StatusGreen.copy(alpha = 0.8f), radius = 8.dp.toPx(), center = Offset(size.width * 0.2f, size.height * 0.8f))
                 }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        GridMatrix()
-                    }
-                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Low", fontSize = 10.sp, color = Color.Gray)
-                        Text("Med", fontSize = 10.sp, color = Color.Gray)
-                        Text("High", fontSize = 10.sp, color = Color.Gray)
-                    }
-                }
+                Text("Impact →", modifier = Modifier.align(Alignment.BottomEnd).offset(y = 16.dp), fontSize = 10.sp, color = Color.Gray)
+                Text("↑ Probability", modifier = Modifier.align(Alignment.TopStart).offset(x = (-16).dp), fontSize = 10.sp, color = Color.Gray)
             }
         }
     }
@@ -695,25 +631,15 @@ fun RiskHeatmapCard(modifier: Modifier = Modifier) {
 @Composable
 fun GridMatrix() {
     Column(modifier = Modifier.fillMaxSize()) {
-        for (i in 0 until 3) {
-            Row(modifier = Modifier.weight(1f)) {
-                for (j in 0 until 4) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .padding(1.dp)
-                            .background(
-                                if ((i == 0) && (j == 3)) StatusRedBackground else Color(0xFFF1F3F4)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if ((i == 0) && (j == 3)) {
-                            Box(modifier = Modifier.size(24.dp).background(Color(0xFFC62828), CircleShape), contentAlignment = Alignment.Center) {
-                                Text("3", color = Color.White, fontSize = 10.sp)
-                            }
-                        }
+        for (i in 0 until 5) {
+            Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                for (j in 0 until 5) {
+                    val color = when {
+                        i < 2 && j > 2 -> StatusRedBackground
+                        i > 2 && j < 2 -> StatusGreenBackground
+                        else -> StatusAmberBackground.copy(alpha = 0.3f)
                     }
+                    Box(modifier = Modifier.weight(1f).fillMaxHeight().padding(1.dp).background(color))
                 }
             }
         }
@@ -740,7 +666,8 @@ fun RedListTableCard(exceptions: List<ProjectException>, modifier: Modifier = Mo
             }
             
             LazyColumn {
-                items(exceptions) { ex ->
+                items(exceptions.size) { index ->
+                    val ex = exceptions[index]
                     Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(ex.projectName, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = PrimaryNavy)
                         Column(modifier = Modifier.weight(1f)) {
@@ -771,10 +698,10 @@ fun BoardInterventionsSidebar(interventions: List<BoardIntervention>, modifier: 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // Board icon placeholder
                 Canvas(modifier = Modifier.size(24.dp)) {
-                    drawLine(color = Color.White, start = androidx.compose.ui.geometry.Offset(0f, size.height * 0.8f), end = androidx.compose.ui.geometry.Offset(size.width, size.height * 0.2f), strokeWidth = 2.dp.toPx())
-                    drawCircle(color = Color.White, radius = 2.dp.toPx(), center = androidx.compose.ui.geometry.Offset(size.width * 0.2f, size.height * 0.65f))
-                    drawCircle(color = Color.White, radius = 2.dp.toPx(), center = androidx.compose.ui.geometry.Offset(size.width * 0.5f, size.height * 0.5f))
-                    drawCircle(color = Color.White, radius = 2.dp.toPx(), center = androidx.compose.ui.geometry.Offset(size.width * 0.8f, size.height * 0.35f))
+                    drawLine(color = Color.White, start = Offset(0f, size.height * 0.8f), end = Offset(size.width, size.height * 0.2f), strokeWidth = 2.dp.toPx())
+                    drawCircle(color = Color.White, radius = 2.dp.toPx(), center = Offset(size.width * 0.2f, size.height * 0.65f))
+                    drawCircle(color = Color.White, radius = 2.dp.toPx(), center = Offset(size.width * 0.5f, size.height * 0.5f))
+                    drawCircle(color = Color.White, radius = 2.dp.toPx(), center = Offset(size.width * 0.8f, size.height * 0.35f))
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Text("Board Interventions", style = MaterialTheme.typography.titleLarge, color = Color.White)
@@ -806,7 +733,7 @@ fun BoardInterventionsSidebar(interventions: List<BoardIntervention>, modifier: 
                                         drawRect(
                                             color = if (isSigned) Color.Gray else Color.White,
                                             size = rectSize,
-                                            topLeft = androidx.compose.ui.geometry.Offset(center.x - (rectSize.width / 2), center.y - 4.dp.toPx() - (rectSize.height / 2))
+                                            topLeft = Offset(center.x - (rectSize.width / 2), center.y - 4.dp.toPx() - (rectSize.height / 2))
                                         )
                                         drawCircle(color = if (isSigned) Color.Gray else Color.White, radius = 1.5.dp.toPx(), center = center.copy(y = center.y + 6.dp.toPx()))
                                     }
@@ -814,8 +741,8 @@ fun BoardInterventionsSidebar(interventions: List<BoardIntervention>, modifier: 
                                     // Document/Code icon
                                     Canvas(modifier = Modifier.size(16.dp)) {
                                         drawRect(color = if (isSigned) Color.Gray else Color.White, style = Stroke(width = 1.5.dp.toPx()))
-                                        drawLine(color = if (isSigned) Color.Gray else Color.White, start = androidx.compose.ui.geometry.Offset(4.dp.toPx(), 4.dp.toPx()), end = androidx.compose.ui.geometry.Offset(12.dp.toPx(), 12.dp.toPx()), strokeWidth = 1.5.dp.toPx())
-                                        drawLine(color = if (isSigned) Color.Gray else Color.White, start = androidx.compose.ui.geometry.Offset(4.dp.toPx(), 12.dp.toPx()), end = androidx.compose.ui.geometry.Offset(12.dp.toPx(), 4.dp.toPx()), strokeWidth = 1.5.dp.toPx())
+                                        drawLine(color = if (isSigned) Color.Gray else Color.White, start = Offset(4.dp.toPx(), 4.dp.toPx()), end = Offset(12.dp.toPx(), 12.dp.toPx()), strokeWidth = 1.5.dp.toPx())
+                                        drawLine(color = if (isSigned) Color.Gray else Color.White, start = Offset(4.dp.toPx(), 12.dp.toPx()), end = Offset(12.dp.toPx(), 4.dp.toPx()), strokeWidth = 1.5.dp.toPx())
                                     }
                                 }
                             }
@@ -858,40 +785,4 @@ fun BoardInterventionsSidebar(interventions: List<BoardIntervention>, modifier: 
     }
 }
 
-@Preview(device = DESKTOP)
-@Composable
-fun DashboardPreview() {
-    val sampleMetrics = DashboardMetrics(
-        strategicRagStatus = RAGStatus.GREEN,
-        netProgressPercentage = 68.0,
-        strategicGrowthHours = 1250.0,
-        businessAsUsualHours = 450.0,
-        milestones = listOf(
-            Milestone("Product Launch", "OCT"),
-            Milestone("Market Entry", "NOV"),
-            Milestone("Q3 Audit", "DEC")
-        ),
-        risks = listOf(
-            Risk("Resource Attrition", 4, 5),
-            Risk("Dependency Delay", 3, 4)
-        ),
-        exceptions = listOf(
-            ProjectException("Project Orion", "Hiring 2 senior architects to resolve technical bottleneck."),
-            ProjectException("Nexus Integration", "Contractor dispute; legal mediation scheduled for Friday."),
-            ProjectException("Data Migration", "Storage limits reached; approving emergency cloud burst.")
-        ),
-        boardInterventions = listOf(
-            BoardIntervention("Approve shift of 3 devs from Project B to Project A to secure Q3 goal."),
-            BoardIntervention("Authorize $50k contingency fund release for Orion licensing fees.")
-        )
-    )
-    App(metrics = sampleMetrics)
-}
 
-@Preview(device = DESKTOP)
-@Composable
-fun SearchPreview() {
-    DashboardTheme {
-        ProjectSearchScreen(modifier = Modifier.fillMaxSize().background(MainBackground))
-    }
-}

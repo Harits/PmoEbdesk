@@ -1,4 +1,4 @@
-package com.sekota.pmoebdesk
+package com.sekota.pmoebdesk.core
 
 interface Platform {
     val name: String

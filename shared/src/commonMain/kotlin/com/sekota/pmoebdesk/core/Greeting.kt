@@ -1,4 +1,4 @@
-package com.sekota.pmoebdesk
+package com.sekota.pmoebdesk.core
 
 class Greeting {
     private val platform = getPlatform()

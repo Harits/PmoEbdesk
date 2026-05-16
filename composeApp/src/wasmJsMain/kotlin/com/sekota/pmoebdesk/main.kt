@@ -1,5 +1,11 @@
 package com.sekota.pmoebdesk
 
+import com.sekota.pmoebdesk.di.initKoin
+import com.sekota.pmoebdesk.di.viewModelModule
+
+import com.sekota.pmoebdesk.features.dashboard.domain.*
+import com.sekota.pmoebdesk.features.dashboard.data.*
+
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,26 +54,14 @@ fun main() {
 
 @Composable
 fun AppContainer(config: AppConfig, repository: OpenProjectRepository) {
-    var metrics by remember { mutableStateOf<DashboardMetrics?>(null) }
-    var error by remember { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(Unit) {
-        try {
-            println("AppContainer: Starting data fetch...")
-            val result = repository.getDashboardMetrics(config.OPENPROJECT_URL, config.OPENPROJECT_API_KEY)
-            metrics = result
-            println("AppContainer: Data fetch completed. Metrics received.")
-        } catch (e: Throwable) {
-            println("AppContainer: Data fetch failed: ${e.message}")
-            error = e.message ?: "Unknown error"
+    val projectRepository = remember {
+        if (config.USE_MOCK_DATA) {
+            com.sekota.pmoebdesk.features.projects.data.MockProjectSearchRepositoryImpl()
+        } else {
+            com.sekota.pmoebdesk.features.projects.data.ProductionProjectSearchRepositoryImpl()
         }
     }
-
-    if (metrics != null) {
-        App(metrics)
-    } else if (error != null) {
-        Text("Error: \$error")
-    } else {
-        Text("Loading dashboard data...")
-    }
+    val viewModel = remember { com.sekota.pmoebdesk.features.dashboard.presentation.DashboardViewModel(GetBodDashboardDataUseCase(repository)) }
+    val projectViewModel = remember { com.sekota.pmoebdesk.features.projects.presentation.ProjectSearchViewModel(com.sekota.pmoebdesk.features.projects.domain.SearchProjectsUseCase(projectRepository)) }
+    App(viewModel, projectViewModel, config.OPENPROJECT_URL, config.OPENPROJECT_API_KEY)
 }

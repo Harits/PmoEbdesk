@@ -1,4 +1,5 @@
 package com.sekota.pmoebdesk
+import com.sekota.pmoebdesk.core.*
 
 import io.ktor.server.application.*
 import io.ktor.server.engine.*

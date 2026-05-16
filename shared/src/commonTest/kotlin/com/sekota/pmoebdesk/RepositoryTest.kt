@@ -1,4 +1,6 @@
 package com.sekota.pmoebdesk
+import com.sekota.pmoebdesk.features.dashboard.domain.*
+import com.sekota.pmoebdesk.features.dashboard.data.*
 
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test

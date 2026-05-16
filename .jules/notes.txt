@@ -1,0 +1,8 @@
+The task is to:
+1. Complete unfinished features. Specifically mapping logic in the OpenProject API, and completing ProjectSearchScreen which has hardcoded data.
+2. Architecture: Clean Architecture nested within a Screaming Architecture (feature-first).
+    - Features: dashboard, projects, interventions, etc.
+3. Replace hardcoded dummy implementations with OpenProject API usage.
+    - DashboardMetrics calculation.
+    - Project Search Screen.
+4. Libraries: Utilize robust Android lifecycle VM (`androidx.lifecycle.ViewModel`), Koin (maybe to be added).

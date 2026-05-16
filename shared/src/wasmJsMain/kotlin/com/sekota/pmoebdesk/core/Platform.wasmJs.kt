@@ -1,4 +1,6 @@
-package com.sekota.pmoebdesk
+package com.sekota.pmoebdesk.core
+
+import com.sekota.pmoebdesk.core.Platform
 
 class WasmPlatform: Platform {
     override val name: String = "Web with Kotlin/Wasm"
