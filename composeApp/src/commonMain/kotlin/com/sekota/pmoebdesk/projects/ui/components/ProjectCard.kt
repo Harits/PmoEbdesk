@@ -1,8 +1,6 @@
 package com.sekota.pmoebdesk.projects.ui.components
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,14 +22,14 @@ fun ProjectCard(
     status: String,
     statusColor: Color,
     statusBg: Color,
-    budget: String,
     deadline: String,
     startedDate: String,
     teamCount: Int = 0,
-    isWarning: Boolean = false
+    isWarning: Boolean = false,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(16.dp)
@@ -65,11 +63,7 @@ fun ProjectCard(
                 HorizontalDivider(color = Color(0xFFF1F3F4))
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column {
-                        Text("BUDGET", style = MaterialTheme.typography.labelLarge, color = Color.Gray)
-                        Text(budget, style = MaterialTheme.typography.labelMedium, color = Color.Black)
-                    }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text("DEADLINE", style = MaterialTheme.typography.labelLarge, color = Color.Gray)
                         Text(deadline, style = MaterialTheme.typography.labelMedium, color = Color.Black)

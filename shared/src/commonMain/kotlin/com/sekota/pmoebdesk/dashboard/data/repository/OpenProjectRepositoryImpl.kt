@@ -16,8 +16,8 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 class MockOpenProjectRepositoryImpl : OpenProjectRepository {
-    override suspend fun getDashboardMetrics(baseUrl: String, apiKey: String): DashboardMetrics {
-        return DashboardMetrics(
+    override suspend fun getDashboardMetrics(baseUrl: String, apiKey: String, projectId: Int?): DashboardMetrics {
+        val baseMetrics = DashboardMetrics(
             strategicRagStatus = RAGStatus.AMBER,
             netProgressPercentage = 68.0,
             trendPercentage = 4.2,
@@ -42,6 +42,16 @@ class MockOpenProjectRepositoryImpl : OpenProjectRepository {
                 BoardIntervention("Approve additional budget for Q3 marketing.")
             )
         )
+
+        return if (projectId != null) {
+            // Mock filtered metrics for a specific project
+            baseMetrics.copy(
+                exceptions = baseMetrics.exceptions.filter { it.projectName.contains(projectId.toString()) || it.projectName.contains("Orion") },
+                milestones = baseMetrics.milestones.take(2)
+            )
+        } else {
+            baseMetrics
+        }
     }
 }
 
@@ -56,12 +66,18 @@ class ProductionOpenProjectRepositoryImpl(private val client: HttpClient = HttpC
     }
 }) : OpenProjectRepository {
     @OptIn(ExperimentalEncodingApi::class)
-    override suspend fun getDashboardMetrics(baseUrl: String, apiKey: String): DashboardMetrics {
+    override suspend fun getDashboardMetrics(baseUrl: String, apiKey: String, projectId: Int?): DashboardMetrics {
         val authString = "apikey:$apiKey"
         val encodedAuth = Base64.encode(authString.encodeToByteArray())
 
         try {
-            val httpResponse = client.get("$baseUrl/api/v3/work_packages?pageSize=100") {
+            val url = if (projectId != null) {
+                "$baseUrl/api/v3/projects/$projectId/work_packages?pageSize=100"
+            } else {
+                "$baseUrl/api/v3/work_packages?pageSize=100"
+            }
+
+            val httpResponse = client.get(url) {
                 header(HttpHeaders.Authorization, "Basic $encodedAuth")
                 header(HttpHeaders.Accept, "application/json")
             }

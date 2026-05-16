@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 
 import com.sekota.pmoebdesk.projects.domain.model.Project
+import com.sekota.pmoebdesk.projects.domain.model.ProjectStatus
 import com.sekota.pmoebdesk.projects.domain.repository.ProjectRepository
 import com.sekota.pmoebdesk.projects.data.repository.MockProjectRepositoryImpl
 import com.sekota.pmoebdesk.projects.data.repository.ProductionProjectRepositoryImpl
@@ -85,14 +86,23 @@ fun AppContainer(
     var metrics by remember { mutableStateOf<DashboardMetrics?>(null) }
     var projects by remember { mutableStateOf<List<Project>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
+    var selectedStatus by remember { mutableStateOf<ProjectStatus?>(null) }
+    var selectedProject by remember { mutableStateOf<Project?>(null) }
     var isSearching by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     var searchJob by remember { mutableStateOf<Job?>(null) }
 
+    LaunchedEffect(selectedProject) {
+        try {
+            metrics = dashboardRepo.getDashboardMetrics(config.OPENPROJECT_URL, config.OPENPROJECT_API_KEY, selectedProject?.id)
+        } catch (e: Throwable) {
+            error = e.message ?: "Unknown error"
+        }
+    }
+
     LaunchedEffect(Unit) {
         try {
-            metrics = dashboardRepo.getDashboardMetrics(config.OPENPROJECT_URL, config.OPENPROJECT_API_KEY)
             // Initial project load
             isSearching = true
             projects = projectRepo.searchProjects(
@@ -105,8 +115,9 @@ fun AppContainer(
         }
     }
 
-    fun handleSearch(query: String) {
+    fun handleSearch(query: String, status: ProjectStatus? = selectedStatus) {
         searchQuery = query
+        selectedStatus = status
         searchJob?.cancel()
         searchJob = scope.launch {
             delay(300)
@@ -114,7 +125,8 @@ fun AppContainer(
             projects = projectRepo.searchProjects(
                 query = query,
                 parentId = config.PROJECT_PARENT_ID,
-                allowedIds = config.ALLOWED_PROJECT_IDS?.split(",")?.mapNotNull { it.trim().toIntOrNull() }
+                allowedIds = config.ALLOWED_PROJECT_IDS?.split(",")?.mapNotNull { it.trim().toIntOrNull() },
+                status = status
             )
             isSearching = false
         }
@@ -127,7 +139,12 @@ fun AppContainer(
             metrics = metrics,
             projects = projects,
             searchQuery = searchQuery,
-            onSearchQueryChange = ::handleSearch,
+            onSearchQueryChange = { handleSearch(it) },
+            selectedStatus = selectedStatus,
+            onStatusChange = { handleSearch(searchQuery, it) },
+            onProjectSelected = { selectedProject = it },
+            selectedProject = selectedProject,
+            onResetSelection = { selectedProject = null },
             isSearching = isSearching
         )
     }

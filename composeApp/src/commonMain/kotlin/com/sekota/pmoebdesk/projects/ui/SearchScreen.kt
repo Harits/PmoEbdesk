@@ -1,27 +1,14 @@
-    package com.sekota.pmoebdesk.projects.ui
+package com.sekota.pmoebdesk.projects.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.sekota.pmoebdesk.core.ui.StatusAmber
-import com.sekota.pmoebdesk.core.ui.StatusAmberBackground
-import com.sekota.pmoebdesk.core.ui.StatusGreen
-import com.sekota.pmoebdesk.core.ui.StatusGreenBackground
-import com.sekota.pmoebdesk.core.ui.StatusRed
-import com.sekota.pmoebdesk.core.ui.StatusRedBackground
-import com.sekota.pmoebdesk.projects.ui.components.FilterBar
-import com.sekota.pmoebdesk.projects.ui.components.ProjectCard
-import com.sekota.pmoebdesk.projects.ui.components.SearchBarFull
-
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.sekota.pmoebdesk.core.ui.*
 import com.sekota.pmoebdesk.projects.domain.model.Project
 import com.sekota.pmoebdesk.projects.domain.model.ProjectStatus
@@ -34,6 +21,9 @@ fun ProjectSearchScreen(
     projects: List<Project>,
     query: String,
     onQueryChange: (String) -> Unit,
+    selectedStatus: ProjectStatus?,
+    onStatusChange: (ProjectStatus?) -> Unit,
+    onProjectSelected: (Project) -> Unit,
     isLoading: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -45,18 +35,18 @@ fun ProjectSearchScreen(
             SearchBarFull(query, onQueryChange)
         }
         item {
-            FilterBar()
+            FilterBar(selectedStatus, onStatusChange)
         }
         
         if (isLoading) {
             item {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
         } else if (projects.isEmpty()) {
             item {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                     Text("No projects found matching \"$query\"", color = Color.Gray)
                 }
             }
@@ -77,11 +67,11 @@ fun ProjectSearchScreen(
                     status = project.status.name.replace("_", " ").lowercase().capitalize(),
                     statusColor = color,
                     statusBg = bg,
-                    budget = project.budget ?: "N/A",
                     deadline = project.deadline ?: "N/A",
                     startedDate = project.startedDate ?: "N/A",
                     teamCount = project.teamCount,
-                    isWarning = project.isWarning
+                    isWarning = project.isWarning,
+                    onClick = { onProjectSelected(project) }
                 )
             }
         }

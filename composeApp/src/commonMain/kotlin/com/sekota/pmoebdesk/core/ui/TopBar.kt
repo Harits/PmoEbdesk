@@ -16,7 +16,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun TopBar(onSearchFocus: () -> Unit = {}, onTitleClick: () -> Unit = {}) {
+fun TopBar(
+    onSearchFocus: () -> Unit = {},
+    onTitleClick: () -> Unit = {},
+    selectedProjectName: String? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -43,12 +47,21 @@ fun TopBar(onSearchFocus: () -> Unit = {}, onTitleClick: () -> Unit = {}) {
                 }
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                "PMO Strategic Oversight",
-                style = MaterialTheme.typography.headlineLarge,
-                color = PrimaryNavy,
-                fontWeight = FontWeight.Bold
-            )
+            Column {
+                Text(
+                    "PMO Strategic Oversight",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = PrimaryNavy,
+                    fontWeight = FontWeight.Bold
+                )
+                if (selectedProjectName != null) {
+                    Text(
+                        selectedProjectName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
+            }
         }
         
         Surface(

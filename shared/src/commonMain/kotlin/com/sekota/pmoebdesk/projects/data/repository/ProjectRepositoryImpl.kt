@@ -13,7 +13,7 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 class MockProjectRepositoryImpl : ProjectRepository {
-    override suspend fun searchProjects(query: String?, parentId: Int?, allowedIds: List<Int>?): List<Project> {
+    override suspend fun searchProjects(query: String?, parentId: Int?, allowedIds: List<Int>?, status: ProjectStatus?): List<Project> {
         val allProjects = listOf(
             Project(1, "project-a", "Project Alpha", ProjectStatus.ON_TRACK, "Rp 500M", "2025-12-31", "2024-01-01", 5),
             Project(2, "project-b", "Project Beta", ProjectStatus.AT_RISK, "Rp 1.2B", "2025-06-30", "2024-03-15", 12, isWarning = true),
@@ -22,8 +22,9 @@ class MockProjectRepositoryImpl : ProjectRepository {
         )
         
         return allProjects.filter { p ->
-            (query == null || p.name.contains(query, ignoreCase = true)) &&
-            (allowedIds == null || allowedIds.contains(p.id))
+            (query.isNullOrBlank() || p.name.contains(query, ignoreCase = true) || p.identifier.contains(query, ignoreCase = true)) &&
+            (allowedIds == null || allowedIds.contains(p.id)) &&
+            (status == null || p.status == status)
         }
     }
 }
@@ -37,7 +38,7 @@ class ProductionProjectRepositoryImpl(
     @OptIn(ExperimentalEncodingApi::class)
     private val authHeader = "Basic " + Base64.encode("apikey:$apiKey".encodeToByteArray())
 
-    override suspend fun searchProjects(query: String?, parentId: Int?, allowedIds: List<Int>?): List<Project> {
+    override suspend fun searchProjects(query: String?, parentId: Int?, allowedIds: List<Int>?, status: ProjectStatus?): List<Project> {
         try {
             val filters = buildJsonArray {
                 if (!query.isNullOrBlank()) {
@@ -62,6 +63,16 @@ class ProductionProjectRepositoryImpl(
                             put("operator", "=")
                             putJsonArray("values") { 
                                 allowedIds.forEach { add(it.toString()) }
+                            }
+                        })
+                    })
+                }
+                if (status != null) {
+                    add(buildJsonObject {
+                        put("status", buildJsonObject {
+                            put("operator", "=")
+                            putJsonArray("values") { 
+                                add(mapProjectStatusToOpenProject(status))
                             }
                         })
                     })
@@ -106,6 +117,17 @@ class ProductionProjectRepositoryImpl(
             "completed" -> ProjectStatus.COMPLETED
             "on hold" -> ProjectStatus.ON_HOLD
             else -> ProjectStatus.UNKNOWN
+        }
+    }
+
+    private fun mapProjectStatusToOpenProject(status: ProjectStatus): String {
+        return when (status) {
+            ProjectStatus.ON_TRACK -> "on track"
+            ProjectStatus.AT_RISK -> "at risk"
+            ProjectStatus.CRITICAL -> "critical"
+            ProjectStatus.COMPLETED -> "completed"
+            ProjectStatus.ON_HOLD -> "on hold"
+            ProjectStatus.UNKNOWN -> ""
         }
     }
 }

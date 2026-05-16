@@ -25,6 +25,11 @@ fun App(
     projects: List<Project>,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
+    selectedStatus: ProjectStatus?,
+    onStatusChange: (ProjectStatus?) -> Unit,
+    onProjectSelected: (Project) -> Unit,
+    selectedProject: Project? = null,
+    onResetSelection: () -> Unit = {},
     isSearching: Boolean = false
 ) {
     DashboardTheme {
@@ -33,7 +38,11 @@ fun App(
         Column(modifier = Modifier.fillMaxSize().background(MainBackground)) {
             TopBar(
                 onSearchFocus = { currentScreen = "search" },
-                onTitleClick = { currentScreen = "dashboard" }
+                onTitleClick = { 
+                    onResetSelection()
+                    currentScreen = "dashboard" 
+                },
+                selectedProjectName = selectedProject?.name
             )
             Box(modifier = Modifier.weight(1f)) {
                 if (currentScreen == "dashboard") {
@@ -49,6 +58,12 @@ fun App(
                         projects = projects,
                         query = searchQuery,
                         onQueryChange = onSearchQueryChange,
+                        selectedStatus = selectedStatus,
+                        onStatusChange = onStatusChange,
+                        onProjectSelected = { project ->
+                            onProjectSelected(project)
+                            currentScreen = "dashboard"
+                        },
                         isLoading = isSearching,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -90,7 +105,10 @@ fun DashboardPreview() {
         metrics = sampleMetrics,
         projects = emptyList(),
         searchQuery = "",
-        onSearchQueryChange = {}
+        onSearchQueryChange = {},
+        selectedStatus = null,
+        onStatusChange = {},
+        onProjectSelected = {}
     )
 }
 
@@ -100,10 +118,13 @@ fun SearchPreview() {
     DashboardTheme {
         ProjectSearchScreen(
             projects = listOf(
-                Project(1, "p1", "Project Orion", ProjectStatus.ON_TRACK, "$1.2M", "Dec 2024", "Jan 15, 2024", 5)
+                Project(1, "p1", "Project Orion", ProjectStatus.ON_TRACK, "Rp 1.2B", "Dec 2024", "Jan 15, 2024", 5)
             ),
             query = "",
             onQueryChange = {},
+            selectedStatus = null,
+            onStatusChange = {},
+            onProjectSelected = {},
             modifier = Modifier.fillMaxSize().background(MainBackground)
         )
     }
