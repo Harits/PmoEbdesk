@@ -2,33 +2,52 @@
 
 Welcome! This repository acts as a bridge to sync data from local Excel/CSV files into OpenProject, leveraging the Jules API where necessary. 
 
-As the Android Studio AI Agent, your goal is to assist the user in writing the Kotlin Multiplatform (KMP) code to perform this synchronization.
+As the Android Studio AI Agent, your goal is to assist the user in writing the Kotlin Multiplatform (KMP) code to perform this synchronization, adhering to **Clean Architecture**, **Screaming Architecture**, and **TDD** principles.
+
+## 🏗️ Architectural Principles
+
+### 1. Screaming Architecture
+The folder structure must reflect the **Business Domain**, not the frameworks used. Avoid generic names like `models` or `fragments` at the top level. Instead, organize by features/entities (e.g., `sync`, `workpackages`, `parsing`).
+
+### 2. Clean Architecture & Dependency Rule
+- **Domain Layer (Entities & Use Cases)**: Business logic. No dependencies on outer layers (Ktor, Excel libraries, etc.).
+- **Data Layer (Repositories & Data Sources)**: Implementations of Domain interfaces. Handles API calls and file reading.
+- **Presentation Layer**: UI logic and ViewModels.
+- **Dependency Rule**: Dependencies must only point inwards. Outer layers depend on inner layers.
+
+### 3. Coding Standards
+- **Single Responsibility (SRP)**: Every class and function must have only one reason to change.
+- **Small Functions**: No function should exceed 20 lines unless absolutely necessary for complex algorithms.
+
+## 🧪 TDD First Protocol
+Before generating implementation code, you **MUST** write a failing test in the appropriate test directory that defines the expected behavior. Use mocking libraries (like `mockk`) to isolate units of code.
+
+## 🛡️ Constraint Protocol
+When a new feature is requested, follow these steps strictly:
+
+1. **Analyze the Boundary**: Identify which layer this feature belongs to (Domain, Data, or Presentation).
+2. **Define the Interface**: Define the contract (Interface/Protocol) first in the Domain layer.
+3. **Draft the Test**: Write the unit test for the Use Case or implementation based on the Interface.
+4. **Implement**: Write the minimum code required to make the test pass.
+5. **Critique**: If the implementation violates the Dependency Rule or other principles, point it out and suggest a refactor before finalizing.
 
 ## 📁 Directory Structure & Context
-You have several resources available to understand the environment and the target APIs:
+- **`data/`**: Source `.xlsx` or `.csv` files. Path configured via `CSV_FILE_PATH` in `.env`.
+- **`.design/`**: Design documents and UI/UX specifications.
+- **`.openproject/`**: `work_packages_api.md` (API details & Ktor examples) and `.env.example`.
+- **`.jules/`**: `api_reference.md` (Jules API docs) and `.env.example`.
 
-- **`data/`**: This directory is where the user typically places the source `.xlsx` or `.csv` files. The actual file path is configured via `CSV_FILE_PATH` in the `.env` file.
-- **`.openproject/`**: 
-  - Contains `.env.example` showing the required configuration variables.
-  - Contains `work_packages_api.md` detailing how to authenticate, create, and update Work Packages using the OpenProject REST API (with Ktor examples).
-- **`.jules/`**:
-  - Contains `.env.example` showing required configuration variables.
-  - Contains `api_reference.md` which has the documentation for the Jules API, in case Jules needs to be invoked during the sync process.
-
-## 🛠️ Your Tasks
-When the user asks you to implement the sync logic, you should follow these steps:
-
-1. **Environment Setup**: Ensure the user has copied the `.env.example` files to actual `.env` files and populated them with their credentials and the path to the CSV file (`CSV_FILE_PATH`). (Do not commit real `.env` files). Read these variables into the KMP application.
-2. **Read the Data**: Write Kotlin code to parse the Excel/CSV file specified by `CSV_FILE_PATH`. You can use common Kotlin CSV libraries (like `kotlin-csv`) or Apache POI (if running purely on JVM/Desktop target).
-3. **Map the Data**: Map the columns from the source file to the attributes required by OpenProject Work Packages (e.g., Subject, Description, Assignee, etc.).
-4. **Sync via OpenProject API**: 
-   - Use Ktor Client to interact with the OpenProject instance.
-   - Refer strictly to `.openproject/work_packages_api.md` for payload structures.
-   - First, fetch the appropriate Project ID if not already hardcoded.
-   - Iterate through the parsed data and send `POST` requests to create new Work Packages or `PATCH` requests to update existing ones.
-5. **Jules Integration (Optional)**: If the user requires you to trigger Jules tasks as part of the pipeline, refer to `.jules/api_reference.md` to format the REST requests properly.
+## 🛠️ Typical Sync Pipeline Tasks
+1. **Environment Setup**: Read variables from `.env` (credentials, `CSV_FILE_PATH`).
+2. **Read Data (Data Layer)**: Use `kotlin-csv` or Apache POI to parse files.
+3. **Map Data (Domain Layer)**: Use Cases to map source columns to Domain Entities.
+4. **Sync via OpenProject (Data Layer)**: 
+   - Use Ktor Client to interact with OpenProject REST API.
+   - Refer strictly to `.openproject/work_packages_api.md`.
+   - Handle optimistic locking (`lockVersion`) and HTTP errors gracefully.
+5. **Jules Integration (Optional)**: Trigger Jules tasks as part of the domain logic if required.
 
 ## ⚠️ Important Notes
-- Always handle HTTP errors gracefully and print informative logs (e.g., response status and body) if an OpenProject API call fails.
-- OpenProject uses optimistic locking (`lockVersion`) for updates. If updating, fetch the work package first to get the current lock version.
-- Make sure network requests are run inside Kotlin Coroutines (`suspend` functions) and don't block the main thread.
+- Always handle HTTP errors gracefully with informative logs.
+- Network requests must be in Coroutines (`suspend` functions).
+- Do not commit real `.env` files.
