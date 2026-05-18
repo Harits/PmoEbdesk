@@ -11,6 +11,8 @@ class SyncWorkPackagesUseCaseTest {
 
     private class MockSyncRepository : SyncRepository {
         var createProjectCalled = false
+        var lastCreatedProjectStartDate: String? = null
+        var lastCreatedProjectEndDate: String? = null
         var syncWorkPackageCalledCount = 0
         val syncedPackages = mutableListOf<WorkPackage>()
 
@@ -28,8 +30,17 @@ class SyncWorkPackagesUseCaseTest {
             )
         }
 
-        override suspend fun createProjectIfNotExists(name: String, identifier: String): Int? {
+        override suspend fun createProjectIfNotExists(
+            name: String,
+            identifier: String,
+            startDate: String?,
+            endDate: String?,
+            status: String?,
+            parentId: Int?
+        ): Int? {
             createProjectCalled = true
+            lastCreatedProjectStartDate = startDate
+            lastCreatedProjectEndDate = endDate
             return 1
         }
 
@@ -42,6 +53,9 @@ class SyncWorkPackagesUseCaseTest {
         override suspend fun fetchExistingWorkPackages(projectId: Int): List<WorkPackage> {
             return emptyList()
         }
+
+        override suspend fun getStatusMap(): Map<String, Int> = emptyMap()
+        override suspend fun getTypeMap(): Map<String, Int> = emptyMap()
     }
 
     @Test
@@ -52,6 +66,9 @@ class SyncWorkPackagesUseCaseTest {
         useCase("test.csv")
         
         assertTrue(repository.createProjectCalled)
+        assertEquals("2025-01-10", repository.lastCreatedProjectStartDate)
+        assertEquals("2025-03-20", repository.lastCreatedProjectEndDate)
+
         // Jan, Feb, Mar -> 3 tasks
         assertEquals(3, repository.syncWorkPackageCalledCount)
         assertEquals("Monthly Report - January 2025", repository.syncedPackages[0].subject)

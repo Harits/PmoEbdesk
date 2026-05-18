@@ -1,5 +1,7 @@
 package com.sekota.pmoebdesk.projects.data.repository
 
+import com.sekota.pmoebdesk.dashboard.data.remote.model.WorkPackagesResponse
+import com.sekota.pmoebdesk.projects.data.remote.model.ProjectElement
 import com.sekota.pmoebdesk.projects.data.remote.model.ProjectsResponse
 import com.sekota.pmoebdesk.projects.domain.model.Project
 import com.sekota.pmoebdesk.projects.domain.model.ProjectStatus
@@ -90,16 +92,34 @@ class ProductionProjectRepositoryImpl(
             if (response.status == HttpStatusCode.OK) {
                 val bodyText = response.bodyAsText()
                 val projectsResponse = Json { ignoreUnknownKeys = true }.decodeFromString<ProjectsResponse>(bodyText)
-                return projectsResponse._embedded.elements.map { element ->
+                val elements = projectsResponse._embedded.elements
+                
+                // Fetch dates from work packages for each project
+                val projectDates = if (elements.isNotEmpty()) {
+                    fetchProjectDates(elements.map { it.id })
+                } else emptyMap()
+
+                return elements.map { element ->
+                    val status = mapStatus(element)
+                    val (wpStart, wpEnd) = projectDates[element.id] ?: (null to null)
+                    
+                    val start = wpStart ?: element.startDate
+                    val end = wpEnd ?: element.endDate
+
+                    if (start == null || end == null) {
+                        println("      ⚠️ Project '${element.name}' (ID: ${element.id}) is missing dates in OpenProject.")
+                    }
+
                     Project(
                         id = element.id,
                         identifier = element.identifier,
                         name = element.name,
-                        status = mapStatus(element.status),
+                        status = status,
                         budget = "TBD", // Budget mapping might need custom fields
-                        deadline = "TBD",
-                        startedDate = "TBD",
-                        teamCount = 0
+                        deadline = end ?: "TBD",
+                        startedDate = start ?: "TBD",
+                        teamCount = 0,
+                        isWarning = status == ProjectStatus.AT_RISK || status == ProjectStatus.CRITICAL
                     )
                 }
             }
@@ -109,12 +129,54 @@ class ProductionProjectRepositoryImpl(
         return emptyList()
     }
 
-    private fun mapStatus(status: String?): ProjectStatus {
-        return when (status?.lowercase()) {
+    private suspend fun fetchProjectDates(projectIds: List<Int>): Map<Int, Pair<String?, String?>> {
+        try {
+            val filters = buildJsonArray {
+                add(buildJsonObject {
+                    put("project", buildJsonObject {
+                        put("operator", "=")
+                        putJsonArray("values") {
+                            projectIds.forEach { add(it.toString()) }
+                        }
+                    })
+                })
+            }.toString()
+
+            val response: HttpResponse = client.get("$host/api/v3/work_packages") {
+                header(HttpHeaders.Authorization, authHeader)
+                parameter("filters", filters)
+                parameter("pageSize", 1000)
+                parameter("select", "id,subject,startDate,dueDate,_links")
+            }
+
+            if (response.status == HttpStatusCode.OK) {
+                val bodyText = response.bodyAsText()
+                val wpResponse = Json { ignoreUnknownKeys = true }.decodeFromString<WorkPackagesResponse>(bodyText)
+                val workPackages = wpResponse._embedded.elements
+
+                return workPackages.groupBy { wp ->
+                    // Extract project ID from href: /api/v3/projects/123
+                    wp._links?.project?.href?.split("/")?.lastOrNull()?.toIntOrNull()
+                }.mapNotNull { (projectId, wps) ->
+                    if (projectId == null) return@mapNotNull null
+                    val start = wps.mapNotNull { it.startDate }.minOrNull()
+                    val end = wps.mapNotNull { it.dueDate }.maxOrNull()
+                    projectId to (start to end)
+                }.toMap()
+            }
+        } catch (e: Exception) {
+            println("Error fetching project dates: ${e.message}")
+        }
+        return emptyMap()
+    }
+
+    private fun mapStatus(element: ProjectElement): ProjectStatus {
+        val statusName = element.status ?: element._links?.status?.title
+        return when (statusName?.lowercase()?.replace("_", " ")) {
             "on track", "green" -> ProjectStatus.ON_TRACK
             "at risk", "amber" -> ProjectStatus.AT_RISK
-            "critical", "red" -> ProjectStatus.CRITICAL
-            "completed" -> ProjectStatus.COMPLETED
+            "critical", "off track", "red" -> ProjectStatus.CRITICAL
+            "completed", "finished" -> ProjectStatus.COMPLETED
             "on hold" -> ProjectStatus.ON_HOLD
             else -> ProjectStatus.UNKNOWN
         }
@@ -122,11 +184,11 @@ class ProductionProjectRepositoryImpl(
 
     private fun mapProjectStatusToOpenProject(status: ProjectStatus): String {
         return when (status) {
-            ProjectStatus.ON_TRACK -> "on track"
-            ProjectStatus.AT_RISK -> "at risk"
-            ProjectStatus.CRITICAL -> "critical"
+            ProjectStatus.ON_TRACK -> "on_track"
+            ProjectStatus.AT_RISK -> "at_risk"
+            ProjectStatus.CRITICAL -> "off_track"
             ProjectStatus.COMPLETED -> "completed"
-            ProjectStatus.ON_HOLD -> "on hold"
+            ProjectStatus.ON_HOLD -> "on_hold"
             ProjectStatus.UNKNOWN -> ""
         }
     }

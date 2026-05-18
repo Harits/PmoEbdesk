@@ -5,9 +5,9 @@ import com.sekota.pmoebdesk.sync.domain.repository.SyncRepository
 import kotlinx.datetime.*
 
 class SyncWorkPackagesUseCase(
-    private val repository: SyncRepository
+    private val repository: SyncRepository,
 ) {
-    suspend operator fun invoke(filePath: String) {
+    suspend operator fun invoke(filePath: String, parentProjectId: Int? = null) {
         println("  🔍 Reading CSV from: $filePath")
         val workPackages = repository.getWorkPackagesFromCsv(filePath)
         println("  📊 Found ${workPackages.size} tasks in CSV")
@@ -21,7 +21,24 @@ class SyncWorkPackagesUseCase(
         groupedByProject.forEach { (projectName, packages) ->
             println("  🏗️ Processing project: $projectName")
             val projectIdentifier = slugify(projectName)
-            val projectId = repository.createProjectIfNotExists(projectName, projectIdentifier)
+            
+            // Extract project-level metadata from the first task
+            val firstPkg = packages.first()
+            val projectStatus = when(firstPkg.customFields["statusKet"]?.lowercase()) {
+                "ngo" -> "on_track"
+                "critical" -> "off_track"
+                "overdue" -> "at_risk"
+                else -> "on_track"
+            }
+
+            val projectId = repository.createProjectIfNotExists(
+                name = projectName,
+                identifier = projectIdentifier,
+                startDate = firstPkg.startDate,
+                endDate = firstPkg.dueDate,
+                status = projectStatus,
+                parentId = parentProjectId,
+            )
             
             if (projectId != null) {
                 println("  🆔 Project ID: $projectId")
@@ -29,7 +46,7 @@ class SyncWorkPackagesUseCase(
                 println("  📥 Found ${existingPackages.size} existing work packages in OpenProject")
                 
                 packages.forEach { wp ->
-                    // Map Type based on subject
+                    // Map Type based on subject or prefix
                     val typeId = when {
                         wp.subject.contains("Milestone", ignoreCase = true) -> typeMap["milestone"]
                         wp.subject.contains("Risk", ignoreCase = true) -> typeMap["risk"]
@@ -74,8 +91,8 @@ class SyncWorkPackagesUseCase(
         val subject = wp.subject
         if (!subject.contains("Monthly", ignoreCase = true)) return listOf(wp)
 
-        val start = wp.startDate?.let { try { LocalDate.parse(it) } catch(e: Exception) { null } } ?: return listOf(wp)
-        val end = wp.dueDate?.let { try { LocalDate.parse(it) } catch(e: Exception) { null } } ?: return listOf(wp)
+        val start = wp.startDate?.let { try { LocalDate.parse(it) } catch(_: Exception) { null } } ?: return listOf(wp)
+        val end = wp.dueDate?.let { try { LocalDate.parse(it) } catch(_: Exception) { null } } ?: return listOf(wp)
 
         val tasks = mutableListOf<WorkPackage>()
         var current = LocalDate(start.year, start.month, 1)

@@ -51,59 +51,59 @@ fun ProjectCard(
                             }
                         }
                     }
-                    // More vert icon
-                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
-                        Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
-                        Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
-                    }
+//                    // More vert icon
+//                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+//                        Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
+//                        Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
+//                        Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
+//                    }
                 }
                 
-                Spacer(modifier = Modifier.height(24.dp))
-                HorizontalDivider(color = Color(0xFFF1F3F4))
-                Spacer(modifier = Modifier.height(16.dp))
+//                Spacer(modifier = Modifier.height(24.dp))
+//                HorizontalDivider(color = Color(0xFFF1F3F4))
+//                Spacer(modifier = Modifier.height(16.dp))
+//
+//                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+//                    Column(horizontalAlignment = Alignment.End) {
+//                        Text("DEADLINE", style = MaterialTheme.typography.labelLarge, color = Color.Gray)
+//                        Text(deadline, style = MaterialTheme.typography.labelMedium, color = Color.Black)
+//                    }
+//                }
                 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("DEADLINE", style = MaterialTheme.typography.labelLarge, color = Color.Gray)
-                        Text(deadline, style = MaterialTheme.typography.labelMedium, color = Color.Black)
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(color = Color(0xFFF1F3F4))
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Started: $startedDate", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-                    
-                    if (isWarning) {
-                        // Warning icon
-                        Canvas(modifier = Modifier.size(24.dp)) {
-                            val path = androidx.compose.ui.graphics.Path().apply {
-                                moveTo(size.width / 2, 2.dp.toPx())
-                                lineTo(size.width - 2.dp.toPx(), size.height - 2.dp.toPx())
-                                lineTo(2.dp.toPx(), size.height - 2.dp.toPx())
-                                close()
-                            }
-                            drawPath(path, color = StatusRed)
-                            drawRect(color = Color.White, size = androidx.compose.ui.geometry.Size(2.dp.toPx(), 6.dp.toPx()), topLeft = androidx.compose.ui.geometry.Offset(center.x - 1.dp.toPx(), center.y - 1.dp.toPx()))
-                            drawCircle(color = Color.White, radius = 1.dp.toPx(), center = center.copy(y = center.y + 7.dp.toPx()))
-                        }
-                    } else {
-                        // Avatar stack placeholder
-                        Row(horizontalArrangement = Arrangement.spacedBy((-8).dp)) {
-                            repeat(minOf(teamCount, 3)) {
-                                Box(modifier = Modifier.size(32.dp).border(2.dp, Color.White, CircleShape).clip(CircleShape).background(Color.LightGray))
-                            }
-                            if (teamCount > 3) {
-                                Box(modifier = Modifier.size(32.dp).border(2.dp, Color.White, CircleShape).clip(CircleShape).background(PrimaryNavy), contentAlignment = Alignment.Center) {
-                                    Text("+${teamCount - 3}", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-                    }
-                }
+//                Spacer(modifier = Modifier.height(16.dp))
+//                HorizontalDivider(color = Color(0xFFF1F3F4))
+//                Spacer(modifier = Modifier.height(16.dp))
+//
+//                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+//                    Text("Started: $startedDate", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+//
+//                    if (isWarning) {
+//                        // Warning icon
+//                        Canvas(modifier = Modifier.size(24.dp)) {
+//                            val path = androidx.compose.ui.graphics.Path().apply {
+//                                moveTo(size.width / 2, 2.dp.toPx())
+//                                lineTo(size.width - 2.dp.toPx(), size.height - 2.dp.toPx())
+//                                lineTo(2.dp.toPx(), size.height - 2.dp.toPx())
+//                                close()
+//                            }
+//                            drawPath(path, color = StatusRed)
+//                            drawRect(color = Color.White, size = androidx.compose.ui.geometry.Size(2.dp.toPx(), 6.dp.toPx()), topLeft = androidx.compose.ui.geometry.Offset(center.x - 1.dp.toPx(), center.y - 1.dp.toPx()))
+//                            drawCircle(color = Color.White, radius = 1.dp.toPx(), center = center.copy(y = center.y + 7.dp.toPx()))
+//                        }
+//                    } else {
+//                        // Avatar stack placeholder
+//                        Row(horizontalArrangement = Arrangement.spacedBy((-8).dp)) {
+//                            repeat(minOf(teamCount, 3)) {
+//                                Box(modifier = Modifier.size(32.dp).border(2.dp, Color.White, CircleShape).clip(CircleShape).background(Color.LightGray))
+//                            }
+//                            if (teamCount > 3) {
+//                                Box(modifier = Modifier.size(32.dp).border(2.dp, Color.White, CircleShape).clip(CircleShape).background(PrimaryNavy), contentAlignment = Alignment.Center) {
+//                                    Text("+${teamCount - 3}", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
             }
         }
     }

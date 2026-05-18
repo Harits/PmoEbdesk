@@ -1,5 +1,6 @@
 package com.sekota.pmoebdesk.dashboard.data.remote.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -21,14 +22,17 @@ data class WorkPackageElement(
     val description: Description? = null,
     val percentageDone: Int? = null,
     val estimatedTime: String? = null,
+    val startDate: String? = null,
     val dueDate: String? = null,
+    @SerialName("_links")
     val _links: WorkPackageLinks? = null
 )
 
 @Serializable
 data class WorkPackageLinks(
     val type: Link? = null,
-    val status: Link? = null
+    val status: Link? = null,
+    val project: Link? = null
 )
 
 @Serializable

@@ -217,20 +217,22 @@ class ProductionOpenProjectRepositoryImpl(private val client: HttpClient = HttpC
     private fun formatMonth(dateStr: String?): String {
         if (dateStr == null) return "TBD"
         return try {
-            val month = dateStr.split("-")[1]
+            val parts = dateStr.split("-")
+            // Handle YYYY-MM-DD
+            val month = if (parts[0].length == 4) parts[1] else parts[1]
             when(month) {
-                "01" -> "Jan"
-                "02" -> "Feb"
-                "03" -> "Mar"
-                "04" -> "Apr"
-                "05" -> "May"
-                "06" -> "Jun"
-                "07" -> "Jul"
-                "08" -> "Aug"
-                "09" -> "Sep"
-                "10" -> "Oct"
-                "11" -> "Nov"
-                "12" -> "Dec"
+                "01", "Jan" -> "Jan"
+                "02", "Feb" -> "Feb"
+                "03", "Mar" -> "Mar"
+                "04", "Apr" -> "Apr"
+                "05", "May" -> "May"
+                "06", "Jun" -> "Jun"
+                "07", "Jul" -> "Jul"
+                "08", "Aug" -> "Aug"
+                "09", "Sep" -> "Sep"
+                "10", "Oct" -> "Oct"
+                "11", "Nov" -> "Nov"
+                "12", "Dec" -> "Dec"
                 else -> "TBD"
             }
         } catch (e: Exception) {

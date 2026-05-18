@@ -68,18 +68,77 @@ class OpenProjectDataSourceImpl(
         }
     }
 
-    override suspend fun createProject(name: String, identifier: String): Int? {
-        val payload = ProjectPayload(name, identifier)
+    override suspend fun createProject(
+        name: String, 
+        identifier: String,
+        startDate: String?,
+        endDate: String?,
+        status: String?,
+        parentId: Int?
+    ): Int? {
+        val payload = ProjectPayload(
+            name = name, 
+            identifier = identifier,
+            startDate = startDate,
+            endDate = endDate,
+            links = ProjectLinksPayload(
+                status = status?.let { Link(href = "/api/v3/project_statuses/$it") },
+                parent = parentId?.let { Link(href = "/api/v3/projects/$it") }
+            )
+        )
         val response: HttpResponse = client.post("$host/api/v3/projects") {
             header(HttpHeaders.Authorization, authHeader)
             contentType(ContentType.Application.Json)
             setBody(payload)
         }
-        return if (response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK) {
+        return if ((response.status == HttpStatusCode.Created || response.status == HttpStatusCode.OK)) {
             val body = response.body<JsonObject>()
             body["id"]?.jsonPrimitive?.intOrNull
         } else {
+            val errorBody = response.bodyAsText()
+            println("      ⚠️ Project Creation Error ${response.status}: $errorBody")
             null
+        }
+    }
+
+    override suspend fun updateProject(
+        id: Int,
+        startDate: String?,
+        endDate: String?,
+        status: String?,
+        parentId: Int?
+    ): Boolean {
+        val payload = buildJsonObject {
+            if (startDate != null) put("startDate", JsonPrimitive(startDate))
+            if (endDate != null) put("endDate", JsonPrimitive(endDate))
+            if (status != null || parentId != null) {
+                put("_links", buildJsonObject {
+                    if (status != null) {
+                        put("status", buildJsonObject {
+                            put("href", JsonPrimitive("/api/v3/project_statuses/$status"))
+                        })
+                    }
+                    if (parentId != null) {
+                        put("parent", buildJsonObject {
+                            put("href", JsonPrimitive("/api/v3/projects/$parentId"))
+                        })
+                    }
+                })
+            }
+        }
+        
+        val response: HttpResponse = client.patch("$host/api/v3/projects/$id") {
+            header(HttpHeaders.Authorization, authHeader)
+            contentType(ContentType.Application.Json)
+            setBody(payload)
+        }
+        
+        return if (response.status == HttpStatusCode.OK) {
+            true
+        } else {
+            val errorBody = response.bodyAsText()
+            println("      ⚠️ Project Update Error ${response.status}: $errorBody")
+            false
         }
     }
 
@@ -126,8 +185,8 @@ class OpenProjectDataSourceImpl(
             startDate = workPackage.startDate,
             dueDate = workPackage.dueDate,
             estimatedTime = workPackage.estimatedTime,
-            percentageDone = workPackage.percentageDone,
-            _links = WorkPackageLinks(
+            percentageDone = if ((workPackage.percentageDone ?: 0) > 0) workPackage.percentageDone else null,
+            links = WorkPackageLinks(
                 project = Link(href = "/api/v3/projects/${workPackage.projectId}"),
                 type = workPackage.typeId?.let { Link(href = "/api/v3/types/$it") } 
                     ?: Link(href = "/api/v3/types/1"), // Default to Task

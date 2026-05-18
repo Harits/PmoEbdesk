@@ -21,7 +21,17 @@ data class ProjectElement(
     val name: String,
     val status: String? = null,
     val statusExplanation: Description? = null,
-    val parent: ParentLink? = null
+    val parent: ParentLink? = null,
+    val startDate: String? = null,
+    val endDate: String? = null,
+    val _links: ProjectLinks? = null
+)
+
+@Serializable
+data class ProjectLinks(
+    val self: Link? = null,
+    val status: Link? = null,
+    val parent: Link? = null
 )
 
 @Serializable

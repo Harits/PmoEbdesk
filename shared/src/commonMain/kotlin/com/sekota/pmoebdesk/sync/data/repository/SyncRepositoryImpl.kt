@@ -7,7 +7,7 @@ import com.sekota.pmoebdesk.sync.domain.repository.SyncRepository
 
 class SyncRepositoryImpl(
     private val csvDataSource: CsvDataSource,
-    private val remoteDataSource: OpenProjectDataSource
+    private val remoteDataSource: OpenProjectDataSource,
 ) : SyncRepository {
 
     override suspend fun getWorkPackagesFromCsv(filePath: String): List<WorkPackage> {
@@ -21,7 +21,7 @@ class SyncRepositoryImpl(
                     startDate = formatDate(row.startDate),
                     dueDate = formatDate(row.finishDate),
                     percentageDone = row.progress,
-                    estimatedTime = formatHours(row.hours),
+                    estimatedTime = formatHours(row.hours) ?: "PT1H", // Fallback to 1h to allow progress updates
                     customFields = mapOf(
                         "projectName" to row.projectName,
                         "statusKet" to (row.statusKet ?: "")
@@ -31,10 +31,20 @@ class SyncRepositoryImpl(
         }
     }
 
-    override suspend fun createProjectIfNotExists(name: String, identifier: String): Int? {
+    override suspend fun createProjectIfNotExists(
+        name: String, 
+        identifier: String,
+        startDate: String?,
+        endDate: String?,
+        status: String?,
+        parentId: Int?
+    ): Int? {
         val existing = remoteDataSource.getProject(identifier)
-        if (existing != null) return existing
-        return remoteDataSource.createProject(name, identifier)
+        if (existing != null) {
+            remoteDataSource.updateProject(existing, startDate, endDate, status, parentId)
+            return existing
+        }
+        return remoteDataSource.createProject(name, identifier, startDate, endDate, status, parentId)
     }
 
     override suspend fun fetchExistingWorkPackages(projectId: Int): List<WorkPackage> {
@@ -59,7 +69,7 @@ class SyncRepositoryImpl(
     private fun formatDate(dateStr: String?): String? {
         if (dateStr.isNullOrBlank()) return null
         try {
-            val parts = dateStr.split("-")
+            val parts = dateStr.split("-").map { it.trim() }
             if (parts.size != 3) return null
             val day = parts[0].padStart(2, '0')
             val month = when (parts[1].lowercase()) {
@@ -79,14 +89,14 @@ class SyncRepositoryImpl(
             }
             val year = parts[2]
             return "$year-$month-$day"
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return null
         }
     }
 
     private fun formatHours(hours: String?): String? {
         if (hours.isNullOrBlank()) return null
-        val h = hours.replace(",", ".").filter { it.isDigit() || it == '.' }.toDoubleOrNull() ?: return null
+        val h = hours.replace(",", ".").filter { (it.isDigit() || it == '.') }.toDoubleOrNull() ?: return null
         return "PT${h.toInt()}H"
     }
 }

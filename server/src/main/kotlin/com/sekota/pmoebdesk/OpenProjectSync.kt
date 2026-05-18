@@ -28,7 +28,7 @@ fun main() = runBlocking {
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true
-                encodeDefaults = true
+                encodeDefaults = false
             })
         }
     }
@@ -47,7 +47,7 @@ fun main() = runBlocking {
     println("🌐 Target Host: ${config.openProjectHost}")
 
     try {
-        useCase(config.csvFilePath)
+        useCase(config.csvFilePath, config.projectParentId)
         println("✅ Synchronization completed successfully.")
     } catch (e: Exception) {
         println("❌ Synchronization failed: ${e.message}")

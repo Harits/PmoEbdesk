@@ -6,7 +6,8 @@ import java.util.Properties
 data class SyncConfig(
     val openProjectHost: String,
     val openProjectApiKey: String,
-    val csvFilePath: String
+    val csvFilePath: String,
+    val projectParentId: Int? = null
 )
 
 object SyncConfigLoader {
@@ -37,10 +38,13 @@ object SyncConfigLoader {
             File(root, csvPath).absolutePath
         }
 
+        val parentId = (props.getProperty("PROJECT_PARENT_ID") ?: System.getenv("PROJECT_PARENT_ID"))?.toIntOrNull()
+
         return SyncConfig(
             openProjectHost = host.trimEnd('/'),
             openProjectApiKey = apiKey,
-            csvFilePath = absoluteCsvPath
+            csvFilePath = absoluteCsvPath,
+            projectParentId = parentId
         )
     }
 }

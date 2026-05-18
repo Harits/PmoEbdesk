@@ -1,13 +1,24 @@
 package com.sekota.pmoebdesk.sync.data.remote.model
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 @Serializable
 data class ProjectPayload(
     val name: String,
     val identifier: String,
     val description: DescriptionPayload = DescriptionPayload(raw = ""),
-    val public: Boolean = false
+    val public: Boolean = false,
+    val startDate: String? = null,
+    val endDate: String? = null,
+    @SerialName("_links")
+    val links: ProjectLinksPayload? = null
+)
+
+@Serializable
+data class ProjectLinksPayload(
+    val status: Link? = null,
+    val parent: Link? = null
 )
 
 @Serializable
@@ -25,7 +36,8 @@ data class WorkPackagePayload(
     val dueDate: String? = null,
     val estimatedTime: String? = null,
     val percentageDone: Int? = null,
-    val _links: WorkPackageLinks? = null
+    @SerialName("_links")
+    val links: WorkPackageLinks? = null
 )
 
 @Serializable
