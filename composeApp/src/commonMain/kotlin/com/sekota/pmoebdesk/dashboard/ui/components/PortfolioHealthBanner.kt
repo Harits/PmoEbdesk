@@ -65,7 +65,7 @@ fun PortfolioHealthBanner(status: RAGStatus, trend: Double) {
             }
             Spacer(modifier = Modifier.width(24.dp))
             Column {
-                Text("Portfolio Health", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                Row(verticalAlignment = Alignment.CenterVertically) { Text("Portfolio Health", style = MaterialTheme.typography.bodyMedium, color = Color.Gray); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Overall strategic health status of the portfolio.") }
                 Text("Strategic RAG Status: $statusText", style = MaterialTheme.typography.headlineLarge, color = Color.Black)
             }
             Spacer(modifier = Modifier.weight(1f))

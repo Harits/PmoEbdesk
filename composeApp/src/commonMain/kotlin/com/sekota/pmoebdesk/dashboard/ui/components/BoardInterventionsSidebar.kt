@@ -13,9 +13,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sekota.pmoebdesk.core.ui.*
 import androidx.compose.ui.unit.sp
-import com.sekota.pmoebdesk.core.ui.CardDarkNavy
-import com.sekota.pmoebdesk.core.ui.StatusGreen
 import com.sekota.pmoebdesk.dashboard.domain.model.BoardIntervention
 
 @Composable
@@ -32,7 +31,7 @@ fun BoardInterventionsSidebar(interventions: List<BoardIntervention>, modifier: 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 BoardInterventionIcon(modifier = Modifier.size(24.dp), color = Color.White)
                 Spacer(modifier = Modifier.width(12.dp))
-                Text("Board Interventions", style = MaterialTheme.typography.titleLarge, color = Color.White)
+                Row(verticalAlignment = Alignment.CenterVertically) { Text("Board Interventions", style = MaterialTheme.typography.titleLarge, color = Color.White); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Critical board-level decisions and interventions.", iconColor = Color.White) }
                 
                 if (isSigned) {
                     Spacer(modifier = Modifier.weight(1f))

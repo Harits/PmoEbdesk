@@ -13,8 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sekota.pmoebdesk.core.ui.*
 import androidx.compose.ui.unit.sp
-import com.sekota.pmoebdesk.core.ui.PrimaryNavy
 
 import com.sekota.pmoebdesk.dashboard.domain.model.Milestone
 
@@ -27,7 +27,7 @@ fun CriticalPathRoadmapCard(milestones: List<Milestone>, modifier: Modifier = Mo
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
-            Text("Critical Path Roadmap", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
+            Row(verticalAlignment = Alignment.CenterVertically) { Text("Critical Path Roadmap", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Key milestones on the critical path.") }
             Spacer(modifier = Modifier.height(32.dp))
             
             Box(modifier = Modifier.fillMaxWidth().height(80.dp)) {

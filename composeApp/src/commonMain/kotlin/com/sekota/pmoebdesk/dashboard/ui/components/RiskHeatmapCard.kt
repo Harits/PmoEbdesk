@@ -13,9 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.sekota.pmoebdesk.core.ui.*
 import androidx.compose.ui.unit.sp
-import com.sekota.pmoebdesk.core.ui.PrimaryNavy
-import com.sekota.pmoebdesk.core.ui.StatusRedBackground
+
 
 import com.sekota.pmoebdesk.dashboard.domain.model.Risk
 import com.sekota.pmoebdesk.dashboard.domain.model.RiskLevel
@@ -29,7 +29,7 @@ fun RiskHeatmapCard(risks: List<Risk>, modifier: Modifier = Modifier) {
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
-            Text("Risk Heatmap Matrix", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
+            Row(verticalAlignment = Alignment.CenterVertically) { Text("Risk Heatmap Matrix", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Distribution of project risks by impact and likelihood.") }
             Spacer(modifier = Modifier.height(16.dp))
             
             Row(modifier = Modifier.fillMaxSize()) {

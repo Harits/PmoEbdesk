@@ -12,8 +12,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
-import com.sekota.pmoebdesk.core.ui.PrimaryNavy
 
+import com.sekota.pmoebdesk.core.ui.*
 @Composable
 fun NetProgressCard(progress: Double, modifier: Modifier = Modifier) {
     Card(
@@ -24,7 +24,7 @@ fun NetProgressCard(progress: Double, modifier: Modifier = Modifier) {
     ) {
         Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Net Progress", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
+                Row(verticalAlignment = Alignment.CenterVertically) { Text("Net Progress", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Current progress against year-to-date targets.") }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
                     Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))

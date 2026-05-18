@@ -13,13 +13,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.sekota.pmoebdesk.core.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sekota.pmoebdesk.core.ui.PrimaryNavy
 
 @Composable
 fun EffortDistributionCard(
@@ -40,7 +40,7 @@ fun EffortDistributionCard(
     ) {
         Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Effort Distribution", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
+                Row(verticalAlignment = Alignment.CenterVertically) { Text("Effort Distribution", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Breakdown of effort between Strategic Growth and BAU.") }
                 Canvas(modifier = Modifier.size(20.dp)) {
                     drawArc(color = Color.Gray, startAngle = 0f, sweepAngle = 360f, useCenter = true, style = Stroke(width = 1.5.dp.toPx()))
                     drawArc(color = Color.Gray, startAngle = -90f, sweepAngle = 90f, useCenter = true)

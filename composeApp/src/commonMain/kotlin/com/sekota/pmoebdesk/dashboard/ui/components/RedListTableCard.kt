@@ -13,9 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sekota.pmoebdesk.core.ui.PrimaryNavy
-import com.sekota.pmoebdesk.core.ui.StatusRed
-import com.sekota.pmoebdesk.core.ui.StatusRedBackground
+import com.sekota.pmoebdesk.core.ui.*
 import com.sekota.pmoebdesk.dashboard.domain.model.ProjectException
 
 @Composable
@@ -27,7 +25,11 @@ fun RedListTableCard(exceptions: List<ProjectException>, modifier: Modifier = Mo
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
-            Text("The Red List: Immediate Attention", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("The Red List: Immediate Attention", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
+                Spacer(modifier = Modifier.width(8.dp))
+                InfoTooltip("Projects requiring immediate management attention.")
+            }
             Spacer(modifier = Modifier.height(24.dp))
             
             // Header
