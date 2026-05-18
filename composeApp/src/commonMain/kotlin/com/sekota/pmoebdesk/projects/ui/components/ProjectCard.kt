@@ -11,10 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sekota.pmoebdesk.core.ui.PrimaryNavy
-import com.sekota.pmoebdesk.core.ui.StatusRed
+import com.sekota.pmoebdesk.core.ui.*
 
 @Composable
 fun ProjectCard(
@@ -26,7 +26,7 @@ fun ProjectCard(
     startedDate: String,
     teamCount: Int = 0,
     isWarning: Boolean = false,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -105,6 +105,44 @@ fun ProjectCard(
                     }
                 }
             }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ProjectCardPreview() {
+    DashboardTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            ProjectCard(
+                name = "Project Orion",
+                status = "On Track",
+                statusColor = StatusGreen,
+                statusBg = StatusGreenBackground,
+                deadline = "Dec 2024",
+                startedDate = "Jan 15, 2024",
+                teamCount = 5,
+                isWarning = false
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ProjectCardWarningPreview() {
+    DashboardTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            ProjectCard(
+                name = "Project Beta",
+                status = "At Risk",
+                statusColor = StatusAmber,
+                statusBg = StatusAmberBackground,
+                deadline = "Jun 2025",
+                startedDate = "Mar 15, 2024",
+                teamCount = 12,
+                isWarning = true
+            )
         }
     }
 }
