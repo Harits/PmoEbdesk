@@ -21,6 +21,8 @@ class SyncWorkPackagesUseCaseTest {
                     projectId = 0,
                     startDate = "2025-01-10",
                     dueDate = "2025-03-20",
+                    percentageDone = 50,
+                    estimatedTime = "PT8H",
                     customFields = mapOf("projectName" to "Test Project")
                 )
             )
@@ -64,5 +66,8 @@ class SyncWorkPackagesUseCaseTest {
         
         assertEquals("2025-03-01", repository.syncedPackages[2].startDate)
         assertEquals("2025-03-20", repository.syncedPackages[2].dueDate)
+
+        assertEquals(50, repository.syncedPackages[0].percentageDone)
+        assertEquals("PT8H", repository.syncedPackages[0].estimatedTime)
     }
 }

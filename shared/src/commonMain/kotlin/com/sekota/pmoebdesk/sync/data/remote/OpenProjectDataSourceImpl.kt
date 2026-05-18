@@ -38,6 +38,24 @@ class OpenProjectDataSourceImpl(
         }
     }
 
+    override suspend fun fetchTypes(): Map<String, Int> {
+        val response: HttpResponse = client.get("$host/api/v3/types") {
+            header(HttpHeaders.Authorization, authHeader)
+        }
+        return if (response.status == HttpStatusCode.OK) {
+            val body = response.body<JsonObject>()
+            val embedded = body["_embedded"]?.jsonObject
+            val elements = embedded?.get("elements")?.jsonArray
+            elements?.filterIsInstance<JsonObject>()?.associate { obj: JsonObject ->
+                val name = obj["name"]!!.jsonPrimitive.content.lowercase()
+                val id = obj["id"]!!.jsonPrimitive.int
+                name to id
+            } ?: emptyMap()
+        } else {
+            emptyMap()
+        }
+    }
+
     override suspend fun getProject(identifier: String): Int? {
         val response: HttpResponse = client.get("$host/api/v3/projects/$identifier") {
             header(HttpHeaders.Authorization, authHeader)
@@ -91,7 +109,9 @@ class OpenProjectDataSourceImpl(
                     id = wp["id"]?.jsonPrimitive?.content,
                     subject = wp["subject"]?.jsonPrimitive?.content ?: "",
                     projectId = projectId,
-                    lockVersion = wp["lockVersion"]?.jsonPrimitive?.int
+                    lockVersion = wp["lockVersion"]?.jsonPrimitive?.int,
+                    percentageDone = wp["percentageDone"]?.jsonPrimitive?.intOrNull,
+                    estimatedTime = wp["estimatedTime"]?.jsonPrimitive?.contentOrNull
                 )
             } ?: emptyList()
         } else {
@@ -105,9 +125,14 @@ class OpenProjectDataSourceImpl(
             description = workPackage.description?.let { DescriptionPayload(raw = it) },
             startDate = workPackage.startDate,
             dueDate = workPackage.dueDate,
+            estimatedTime = workPackage.estimatedTime,
+            percentageDone = workPackage.percentageDone,
             _links = WorkPackageLinks(
                 project = Link(href = "/api/v3/projects/${workPackage.projectId}"),
-                status = workPackage.statusId?.let { Link(href = "/api/v3/statuses/$it") } // Note: this might need mapping from status name to href
+                type = workPackage.typeId?.let { Link(href = "/api/v3/types/$it") } 
+                    ?: Link(href = "/api/v3/types/1"), // Default to Task
+                status = workPackage.statusId?.let { Link(href = "/api/v3/statuses/$it") }
+                    ?: Link(href = "/api/v3/statuses/1") // Default to New
             )
         )
 
@@ -121,6 +146,8 @@ class OpenProjectDataSourceImpl(
             val body = response.body<JsonObject>()
             body["id"]?.jsonPrimitive?.int
         } else {
+            val errorBody = response.bodyAsText()
+            println("      ⚠️ API Error ${response.status}: $errorBody")
             null
         }
     }

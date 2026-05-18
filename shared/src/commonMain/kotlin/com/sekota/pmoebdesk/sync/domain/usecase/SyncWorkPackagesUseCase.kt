@@ -8,27 +8,64 @@ class SyncWorkPackagesUseCase(
     private val repository: SyncRepository
 ) {
     suspend operator fun invoke(filePath: String) {
+        println("  🔍 Reading CSV from: $filePath")
         val workPackages = repository.getWorkPackagesFromCsv(filePath)
+        println("  📊 Found ${workPackages.size} tasks in CSV")
+
+        val statusMap = repository.getStatusMap()
+        val typeMap = repository.getTypeMap()
         
         val groupedByProject = workPackages.groupBy { it.customFields["projectName"] ?: "Default" }
+        println("  📁 Grouped into ${groupedByProject.size} projects")
         
         groupedByProject.forEach { (projectName, packages) ->
+            println("  🏗️ Processing project: $projectName")
             val projectIdentifier = slugify(projectName)
             val projectId = repository.createProjectIfNotExists(projectName, projectIdentifier)
             
             if (projectId != null) {
+                println("  🆔 Project ID: $projectId")
                 val existingPackages = repository.fetchExistingWorkPackages(projectId).associateBy { it.subject }
+                println("  📥 Found ${existingPackages.size} existing work packages in OpenProject")
                 
                 packages.forEach { wp ->
-                    val expanded = expandTask(wp)
+                    // Map Type based on subject
+                    val typeId = when {
+                        wp.subject.contains("Milestone", ignoreCase = true) -> typeMap["milestone"]
+                        wp.subject.contains("Risk", ignoreCase = true) -> typeMap["risk"]
+                        else -> typeMap["task"]
+                    }
+
+                    // Map Status based on CSV metadata
+                    val statusText = wp.customFields["statusKet"]?.lowercase() ?: ""
+                    val statusId = when {
+                        statusText.contains("done") -> statusMap["closed"]
+                        statusText.contains("ngo") || statusText.contains("progress") -> statusMap["in progress"]
+                        statusText.contains("stalled") || statusText.contains("overdue") -> statusMap["on hold"]
+                        else -> statusMap["new"]
+                    }
+
+                    val updatedWp = wp.copy(
+                        typeId = typeId,
+                        statusId = statusId
+                    )
+
+                    val expanded = expandTask(updatedWp)
+                    println("    📝 Task: '${wp.subject}' expanded to ${expanded.size} items")
                     expanded.forEach { task ->
                         if (!existingPackages.containsKey(task.subject)) {
-                            repository.syncWorkPackage(task.copy(projectId = projectId))
+                            println("    ➕ Creating new work package: '${task.subject}' (Type: ${task.typeId}, Status: ${task.statusId})")
+                            val result = repository.syncWorkPackage(task.copy(projectId = projectId))
+                            if (result.isFailure) {
+                                println("    ❌ Failed to create '${task.subject}': ${result.exceptionOrNull()?.message}")
+                            }
                         } else {
-                            // TODO: Optional update if needed
+                            println("    ⏭️ Skipping '${task.subject}' (already exists)")
                         }
                     }
                 }
+            } else {
+                println("  ⚠️ Could not get/create project ID for $projectName")
             }
         }
     }

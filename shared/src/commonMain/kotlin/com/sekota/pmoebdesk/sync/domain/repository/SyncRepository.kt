@@ -7,4 +7,6 @@ interface SyncRepository {
     suspend fun createProjectIfNotExists(name: String, identifier: String): Int?
     suspend fun syncWorkPackage(workPackage: WorkPackage): Result<Unit>
     suspend fun fetchExistingWorkPackages(projectId: Int): List<WorkPackage>
+    suspend fun getStatusMap(): Map<String, Int>
+    suspend fun getTypeMap(): Map<String, Int>
 }

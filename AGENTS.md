@@ -37,10 +37,24 @@ When a new feature is requested, follow these steps strictly:
 - **`.openproject/`**: `work_packages_api.md` (API details & Ktor examples) and `.env.example`.
 - **`.jules/`**: `api_reference.md` (Jules API docs) and `.env.example`.
 
+## 📊 Dashboard Data Consistency
+When implementing sync logic from CSV/Excel, you **MUST** ensure the OpenProject work packages are populated with fields that drive the BoD Dashboard. Refer to `OPENPROJECT_DATA_MAPPING.md` for full details.
+
+Key fields to map from source files:
+- **Net Progress**: Map to `percentageDone` (0-100).
+- **Effort Distribution**: 
+    - Map "Hours" to `estimatedTime` using ISO 8601 format (e.g., `PT8H`).
+    - Use keywords "Strategic" or "Growth" in the `subject` to categorize as Strategic vs BAU.
+- **Critical Path**: Ensure `dueDate` is populated for items intended as Milestones. Use "Milestone" in the subject or ensure the Work Package Type is set correctly.
+- **Risks**: Use "Risk" in the subject for automatic detection in the Risk Heatmap.
+- **The Red List**: Populating `dueDate` and `percentageDone` is critical for identifying overdue items.
+
 ## 🛠️ Typical Sync Pipeline Tasks
 1. **Environment Setup**: Read variables from `.env` (credentials, `CSV_FILE_PATH`).
 2. **Read Data (Data Layer)**: Use `kotlin-csv` or Apache POI to parse files.
-3. **Map Data (Domain Layer)**: Use Cases to map source columns to Domain Entities.
+3. **Map Data (Domain Layer)**: 
+   - Use Cases to map source columns to Domain Entities.
+   - **Crucial**: Align mapping with `OPENPROJECT_DATA_MAPPING.md` requirements.
 4. **Sync via OpenProject (Data Layer)**: 
    - Use Ktor Client to interact with OpenProject REST API.
    - Refer strictly to `.openproject/work_packages_api.md`.

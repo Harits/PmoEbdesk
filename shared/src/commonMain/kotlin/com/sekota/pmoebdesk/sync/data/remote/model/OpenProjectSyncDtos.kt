@@ -23,6 +23,8 @@ data class WorkPackagePayload(
     val description: DescriptionPayload? = null,
     val startDate: String? = null,
     val dueDate: String? = null,
+    val estimatedTime: String? = null,
+    val percentageDone: Int? = null,
     val _links: WorkPackageLinks? = null
 )
 

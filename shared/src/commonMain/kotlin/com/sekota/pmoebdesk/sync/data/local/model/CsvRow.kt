@@ -5,5 +5,8 @@ data class CsvRow(
     val customer: String,
     val startDate: String?,
     val finishDate: String?,
+    val progress: Int? = null,
+    val hours: String? = null,
+    val statusKet: String? = null,
     val tasks: List<String>
 )

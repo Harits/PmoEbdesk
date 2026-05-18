@@ -10,6 +10,7 @@ data class WorkPackage(
     val startDate: String? = null,
     val dueDate: String? = null,
     val estimatedTime: String? = null,
+    val percentageDone: Int? = null,
     val lockVersion: Int? = null,
     val customFields: Map<String, String> = emptyMap()
 )

@@ -20,7 +20,12 @@ class SyncRepositoryImpl(
                     projectId = 0, 
                     startDate = formatDate(row.startDate),
                     dueDate = formatDate(row.finishDate),
-                    customFields = mapOf("projectName" to row.projectName)
+                    percentageDone = row.progress,
+                    estimatedTime = formatHours(row.hours),
+                    customFields = mapOf(
+                        "projectName" to row.projectName,
+                        "statusKet" to (row.statusKet ?: "")
+                    )
                 )
             }
         }
@@ -34,6 +39,16 @@ class SyncRepositoryImpl(
 
     override suspend fun fetchExistingWorkPackages(projectId: Int): List<WorkPackage> {
         return remoteDataSource.fetchWorkPackages(projectId)
+    }
+
+    override suspend fun getStatusMap(): Map<String, Int> {
+        return remoteDataSource.fetchStatuses().mapValues { 
+            it.value.substringAfterLast("/").toIntOrNull() ?: 1
+        }
+    }
+
+    override suspend fun getTypeMap(): Map<String, Int> {
+        return remoteDataSource.fetchTypes()
     }
 
     override suspend fun syncWorkPackage(workPackage: WorkPackage): Result<Unit> {
@@ -67,5 +82,11 @@ class SyncRepositoryImpl(
         } catch (e: Exception) {
             return null
         }
+    }
+
+    private fun formatHours(hours: String?): String? {
+        if (hours.isNullOrBlank()) return null
+        val h = hours.replace(",", ".").filter { it.isDigit() || it == '.' }.toDoubleOrNull() ?: return null
+        return "PT${h.toInt()}H"
     }
 }

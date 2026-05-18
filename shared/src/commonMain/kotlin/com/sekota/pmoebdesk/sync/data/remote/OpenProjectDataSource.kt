@@ -9,4 +9,5 @@ interface OpenProjectDataSource {
     suspend fun createWorkPackage(workPackage: WorkPackage): Int?
     suspend fun updateWorkPackage(id: Int, lockVersion: Int, statusName: String?): Boolean
     suspend fun fetchStatuses(): Map<String, String>
+    suspend fun fetchTypes(): Map<String, Int>
 }
