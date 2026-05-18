@@ -40,7 +40,7 @@ fun EffortDistributionCard(
     ) {
         Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Row(verticalAlignment = Alignment.CenterVertically) { Text("Effort Distribution", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Breakdown of effort between Strategic Growth and BAU.") }
+                Row(verticalAlignment = Alignment.CenterVertically) { Text("Effort Distribution", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Shows how engineering and management hours are split. Strategic Growth focus on future capabilities, while BAU (Business As Usual) ensures current operations remain stable.") }
                 Canvas(modifier = Modifier.size(20.dp)) {
                     drawArc(color = Color.Gray, startAngle = 0f, sweepAngle = 360f, useCenter = true, style = Stroke(width = 1.5.dp.toPx()))
                     drawArc(color = Color.Gray, startAngle = -90f, sweepAngle = 90f, useCenter = true)

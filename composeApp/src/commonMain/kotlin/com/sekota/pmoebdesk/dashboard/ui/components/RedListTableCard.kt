@@ -28,7 +28,7 @@ fun RedListTableCard(exceptions: List<ProjectException>, modifier: Modifier = Mo
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("The Red List: Immediate Attention", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
                 Spacer(modifier = Modifier.width(8.dp))
-                InfoTooltip("Projects requiring immediate management attention.")
+                InfoTooltip("A filtered view of projects in 'Red' status. These projects have deviated significantly from their plans and require immediate corrective action or escalation.")
             }
             Spacer(modifier = Modifier.height(24.dp))
             

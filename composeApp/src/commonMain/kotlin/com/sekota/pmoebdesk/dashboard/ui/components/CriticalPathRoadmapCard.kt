@@ -27,7 +27,7 @@ fun CriticalPathRoadmapCard(milestones: List<Milestone>, modifier: Modifier = Mo
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
-            Row(verticalAlignment = Alignment.CenterVertically) { Text("Critical Path Roadmap", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Key milestones on the critical path.") }
+            Row(verticalAlignment = Alignment.CenterVertically) { Text("Critical Path Roadmap", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Visualizes the most important sequence of milestones. Any delay in these items will directly cause a delay in the final delivery of the entire portfolio.") }
             Spacer(modifier = Modifier.height(32.dp))
             
             Box(modifier = Modifier.fillMaxWidth().height(80.dp)) {

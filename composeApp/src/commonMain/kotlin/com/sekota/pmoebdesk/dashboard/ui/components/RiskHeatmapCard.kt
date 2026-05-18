@@ -29,7 +29,7 @@ fun RiskHeatmapCard(risks: List<Risk>, modifier: Modifier = Modifier) {
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
-            Row(verticalAlignment = Alignment.CenterVertically) { Text("Risk Heatmap Matrix", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Distribution of project risks by impact and likelihood.") }
+            Row(verticalAlignment = Alignment.CenterVertically) { Text("Risk Heatmap Matrix", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("A visual representation of the portfolio's risk profile. It helps prioritize management focus on 'High Impact, High Likelihood' risks that pose the greatest threat.") }
             Spacer(modifier = Modifier.height(16.dp))
             
             Row(modifier = Modifier.fillMaxSize()) {
