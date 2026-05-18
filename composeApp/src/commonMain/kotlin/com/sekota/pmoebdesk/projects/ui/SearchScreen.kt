@@ -14,13 +14,11 @@ import com.sekota.pmoebdesk.projects.domain.model.Project
 import com.sekota.pmoebdesk.projects.domain.model.ProjectStatus
 import com.sekota.pmoebdesk.projects.ui.components.FilterBar
 import com.sekota.pmoebdesk.projects.ui.components.ProjectCard
-import com.sekota.pmoebdesk.projects.ui.components.SearchBarFull
 
 @Composable
 fun ProjectSearchScreen(
     projects: List<Project>,
     query: String,
-    onQueryChange: (String) -> Unit,
     selectedStatus: ProjectStatus?,
     onStatusChange: (ProjectStatus?) -> Unit,
     onProjectSelected: (Project) -> Unit,
@@ -31,9 +29,6 @@ fun ProjectSearchScreen(
         modifier = modifier.padding(32.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        item {
-            SearchBarFull(query, onQueryChange)
-        }
         item {
             FilterBar(selectedStatus, onStatusChange)
         }
@@ -56,9 +51,12 @@ fun ProjectSearchScreen(
                 val (color, bg) = when (project.status) {
                     ProjectStatus.ON_TRACK -> StatusGreen to StatusGreenBackground
                     ProjectStatus.AT_RISK -> StatusAmber to StatusAmberBackground
-                    ProjectStatus.CRITICAL -> StatusRed to StatusRedBackground
-                    ProjectStatus.COMPLETED -> Color.Gray to Color(0xFFEEEEEE)
+                    ProjectStatus.OFF_TRACK -> StatusRed to StatusRedBackground
+                    ProjectStatus.NOT_STARTED -> StatusBlue to StatusBlueBackground
+                    ProjectStatus.FINISHED -> StatusPurple to StatusPurpleBackground
+                    ProjectStatus.DISCONTINUED -> StatusBrown to StatusBrownBackground
                     ProjectStatus.ON_HOLD -> Color.DarkGray to Color(0xFFDDDDDD)
+                    ProjectStatus.NOT_SET -> Color.Gray to Color(0xFFF5F5F5)
                     ProjectStatus.UNKNOWN -> Color.Gray to Color(0xFFF5F5F5)
                 }
                 

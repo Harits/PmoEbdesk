@@ -23,6 +23,12 @@ val StatusAmber = Color(0xFFF57C00)
 val StatusAmberBackground = Color(0xFFFFF3E0)
 val StatusRed = Color(0xFFD32F2F)
 val StatusRedBackground = Color(0xFFFFEBEE)
+val StatusBlue = Color(0xFF2196F3)
+val StatusBlueBackground = Color(0xFFE3F2FD)
+val StatusPurple = Color(0xFF9C27B0)
+val StatusPurpleBackground = Color(0xFFF3E5F5)
+val StatusBrown = Color(0xFF795548)
+val StatusBrownBackground = Color(0xFFEFEBE9)
 val CardDarkNavy = Color(0xFF000A3A)
 
 @Composable

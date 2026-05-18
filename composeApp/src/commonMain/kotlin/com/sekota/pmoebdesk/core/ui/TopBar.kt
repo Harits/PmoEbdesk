@@ -5,11 +5,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -17,9 +19,11 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun TopBar(
+    query: String = "",
+    onQueryChange: (String) -> Unit = {},
     onSearchFocus: () -> Unit = {},
     onTitleClick: () -> Unit = {},
-    selectedProjectName: String? = null
+    selectedProjectName: String? = null,
 ) {
     Row(
         modifier = Modifier
@@ -70,7 +74,6 @@ fun TopBar(
             modifier = Modifier
                 .width(360.dp)
                 .height(44.dp)
-                .clickable(onClick = onSearchFocus)
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -81,7 +84,22 @@ fun TopBar(
                     drawLine(color = Color.Gray, start = center, end = center * 1.8f, strokeWidth = 2.dp.toPx())
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                Text("Search projects...", color = Color.Gray, fontSize = 14.sp)
+                Box(modifier = Modifier.weight(1f)) {
+                    if (query.isEmpty()) {
+                        Text("Search projects...", color = Color.Gray, fontSize = 14.sp)
+                    }
+                    BasicTextField(
+                        value = query,
+                        onValueChange = {
+                            onQueryChange(it)
+                            onSearchFocus()
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
+                        cursorBrush = SolidColor(PrimaryNavy),
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
             }
         }
     }
