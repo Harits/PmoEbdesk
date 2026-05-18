@@ -1,7 +1,15 @@
 package com.sekota.pmoebdesk.projects.domain.model
 
 enum class ProjectStatus {
-    ON_TRACK, AT_RISK, CRITICAL, COMPLETED, ON_HOLD, UNKNOWN
+    NOT_SET,
+    ON_TRACK,
+    AT_RISK,
+    OFF_TRACK,
+    NOT_STARTED,
+    FINISHED,
+    DISCONTINUED,
+    ON_HOLD,
+    UNKNOWN
 }
 
 data class Project(

@@ -30,13 +30,15 @@ fun App(
     onProjectSelected: (Project) -> Unit,
     selectedProject: Project? = null,
     onResetSelection: () -> Unit = {},
-    isSearching: Boolean = false
+    isSearching: Boolean = false,
 ) {
     DashboardTheme {
         var currentScreen by remember { mutableStateOf("dashboard") }
         
         Column(modifier = Modifier.fillMaxSize().background(MainBackground)) {
             TopBar(
+                query = searchQuery,
+                onQueryChange = onSearchQueryChange,
                 onSearchFocus = { currentScreen = "search" },
                 onTitleClick = { 
                     onResetSelection()
@@ -57,7 +59,6 @@ fun App(
                     ProjectSearchScreen(
                         projects = projects,
                         query = searchQuery,
-                        onQueryChange = onSearchQueryChange,
                         selectedStatus = selectedStatus,
                         onStatusChange = onStatusChange,
                         onProjectSelected = { project ->
@@ -121,7 +122,6 @@ fun SearchPreview() {
                 Project(1, "p1", "Project Orion", ProjectStatus.ON_TRACK, "Rp 1.2B", "Dec 2024", "Jan 15, 2024", 5)
             ),
             query = "",
-            onQueryChange = {},
             selectedStatus = null,
             onStatusChange = {},
             onProjectSelected = {},

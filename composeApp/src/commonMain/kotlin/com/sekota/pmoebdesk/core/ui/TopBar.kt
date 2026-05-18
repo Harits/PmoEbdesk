@@ -1,25 +1,37 @@
 package com.sekota.pmoebdesk.core.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Devices.DESKTOP
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
 fun TopBar(
+    query: String = "",
+    onQueryChange: (String) -> Unit = {},
     onSearchFocus: () -> Unit = {},
     onTitleClick: () -> Unit = {},
-    selectedProjectName: String? = null
+    selectedProjectName: String? = null,
 ) {
     Row(
         modifier = Modifier
@@ -64,25 +76,93 @@ fun TopBar(
             }
         }
         
+        val interactionSource = remember { MutableInteractionSource() }
+        val isFocused by interactionSource.collectIsFocusedAsState()
+        val borderColor = if (isFocused) PrimaryNavy.copy(alpha = 0.5f) else Color.Transparent
+
         Surface(
-            color = Color(0xFFF1F3F4),
+            color = if (isFocused) Color.White else Color(0xFFF1F3F4),
             shape = RoundedCornerShape(24.dp),
             modifier = Modifier
                 .width(360.dp)
                 .height(44.dp)
-                .clickable(onClick = onSearchFocus)
+                .border(
+                    width = 1.dp,
+                    color = borderColor,
+                    shape = RoundedCornerShape(24.dp)
+                )
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Canvas(modifier = Modifier.size(18.dp)) {
-                    drawCircle(color = Color.Gray, radius = size.minDimension / 3, style = Stroke(width = 2.dp.toPx()))
-                    drawLine(color = Color.Gray, start = center, end = center * 1.8f, strokeWidth = 2.dp.toPx())
+                    val iconColor = if (isFocused) PrimaryNavy else Color.Gray
+                    val strokeWidth = 2.dp.toPx()
+                    val radius = size.minDimension / 3
+                    val circleCenter = Offset(radius + strokeWidth, radius + strokeWidth)
+
+                    drawCircle(color = iconColor, radius = radius, center = circleCenter, style = Stroke(width = strokeWidth))
+
+                    val startX = circleCenter.x + (radius * 0.707f)
+                    val startY = circleCenter.y + (radius * 0.707f)
+
+                    drawLine(color = iconColor, start = Offset(startX, startY), end = Offset(size.width, size.height), strokeWidth = strokeWidth)
                 }
+
                 Spacer(modifier = Modifier.width(12.dp))
-                Text("Search projects...", color = Color.Gray, fontSize = 14.sp)
+
+                Box(modifier = Modifier.weight(1f)) {
+                    if (query.isEmpty()) {
+                        Text("Search projects...", color = Color.Gray, fontSize = 14.sp)
+                    }
+                    BasicTextField(
+                        value = query,
+                        onValueChange = {
+                            onQueryChange(it)
+                            onSearchFocus()
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
+                        cursorBrush = SolidColor(PrimaryNavy),
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        interactionSource = interactionSource
+                    )
+                }
+
+                if (query.isNotEmpty()) {
+                    IconButton(
+                        onClick = { onQueryChange("") },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Clear search",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
             }
         }
+    }
+}
+
+@Preview(device = DESKTOP)
+@Composable
+fun TopBarPreview() {
+    DashboardTheme {
+        TopBar()
+    }
+}
+
+@Preview(device = DESKTOP)
+@Composable
+fun TopBarWithProjectPreview() {
+    DashboardTheme {
+        TopBar(
+            query = "Search query",
+            selectedProjectName = "Project Orion"
+        )
     }
 }
