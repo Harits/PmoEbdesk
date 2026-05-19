@@ -1,46 +1,74 @@
-This is a Kotlin Multiplatform project targeting Desktop (JVM), Server.
+# PMO EB Desk
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-    folder is the appropriate location.
+PMO EB Desk is a Kotlin Multiplatform (KMP) application designed to bridge the gap between local Excel/CSV files and OpenProject. It synchronizes project data into OpenProject work packages, which in turn drive a Board of Directors (BoD) Dashboard.
 
-* [/server](./server/src/main/kotlin) is for the Ktor server application.
+## 🏗️ Architectural Principles
 
-* [/shared](./shared/src) is for the code that will be shared between all targets in the project.
-  The most important subfolder is [commonMain](./shared/src/commonMain/kotlin). If preferred, you
-  can add code to the platform-specific folders here too.
+This project adheres to strict architectural standards to ensure maintainability, scalability, and testability:
 
-### Build and Run Desktop (JVM) Application
+*   **Screaming Architecture**: The folder structure reflects the business domain (e.g., `sync`, `dashboard`, `projects`) rather than framework details.
+*   **Clean Architecture**: Logic is organized into layers (Domain, Data, Presentation) with a strict inward dependency rule.
+*   **TDD (Test-Driven Development)**: Features are developed by first writing failing tests.
 
-To build and run the development version of the desktop app, use the run configuration from the run widget
-in your IDE’s toolbar or run it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:run
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:run
-  ```
+## 📁 Project Structure
 
-### Build and Run Server
+*   **[`/shared`](./shared/src/commonMain/kotlin)**: The core of the application, shared between all targets. It contains the business logic, domain models, and data repository implementations organized by feature:
+    *   `sync/`: Logic for CSV parsing and OpenProject API interaction.
+    *   `dashboard/`: Metrics aggregation for the UI.
+    *   `projects/`: Project listing and search logic.
+*   **[`/server`](./server/src/main/kotlin)**: A Ktor server application that serves the backend API and the Compose WasmJS frontend. It includes a built-in API proxy to handle CORS for OpenProject requests.
+*   **[`/composeApp`](./composeApp/src)**: The UI layer built with Compose Multiplatform.
+    *   `commonMain/`: Shared UI components.
+    *   `jvmMain/`: Desktop-specific implementation.
 
-To build and run the development version of the server, use the run configuration from the run widget
-in your IDE’s toolbar or run it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :server:run
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :server:run
-  ```
+## 🚀 Getting Started
 
----
+### 1. Configuration
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+Create a `.env` file in the root directory based on `.env.example`. Required variables include:
+
+*   `OPENPROJECT_URL`: Base URL of your OpenProject instance.
+*   `OPENPROJECT_API_KEY`: Your API key for authentication.
+*   `CSV_FILE_PATH`: Path to the source `.xlsx` or `.csv` files.
+*   `ALLOWED_PROJECT_IDS`: Comma-separated IDs to filter the dashboard.
+
+### 2. Build & Run
+
+#### Desktop (JVM) Application
+```shell
+./gradlew :composeApp:run
+```
+
+#### Ktor Server
+```shell
+./gradlew :server:run
+```
+
+#### Containerized Deployment (Podman/Docker)
+The project is optimized for single-container deployment.
+1. Build artifacts:
+   ```shell
+   ./gradlew :server:installDist :composeApp:wasmJsBrowserDistribution
+   ```
+2. Start the container:
+   ```shell
+   podman compose up --build
+   ```
+The server runs on port `8080` (or `SERVER_PORT`) and serves the UI from `/app/www`.
+
+## 📊 Business Rules & Data Mapping
+
+Data synchronization follows specific rules to ensure consistency with the BoD Dashboard. Refer to [**`OPENPROJECT_DATA_MAPPING.md`**](./OPENPROJECT_DATA_MAPPING.md) for full details.
+
+### Key Constraints:
+*   **Milestones**: `startDate` and `dueDate` must be identical.
+*   **Progress**: `% Complete` cannot be set if `Estimated Time` is null or zero.
+*   **Consistency**: `dueDate` cannot be earlier than `startDate`.
+
+## 🧪 Testing
+
+Run all unit tests using:
+```shell
+./gradlew test
+```
+See [**`TESTING.md`**](./TESTING.md) for more details on our TDD protocol.
