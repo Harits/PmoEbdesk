@@ -14,6 +14,7 @@ class SyncWorkPackagesUseCase(
 
         val statusMap = repository.getStatusMap()
         val typeMap = repository.getTypeMap()
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         
         val groupedByProject = workPackages.groupBy { it.customFields["projectName"] ?: "Default" }
         println("  📁 Grouped into ${groupedByProject.size} projects")
@@ -53,13 +54,24 @@ class SyncWorkPackagesUseCase(
                         else -> typeMap["task"]
                     }
 
-                    // Map Status based on CSV metadata
+                    // Map Status based on CSV metadata and Date
                     val statusText = wp.customFields["statusKet"]?.lowercase() ?: ""
-                    val statusId = when {
+                    val dueDate = wp.dueDate?.let { try { LocalDate.parse(it) } catch(_: Exception) { null } }
+                    val isPast = dueDate != null && dueDate < today
+
+                    var statusId = when {
                         statusText.contains("done") -> statusMap["closed"]
                         statusText.contains("ngo") || statusText.contains("progress") -> statusMap["in progress"]
                         statusText.contains("stalled") || statusText.contains("overdue") -> statusMap["on hold"]
                         else -> statusMap["new"]
+                    }
+                    
+                    var progress = wp.percentageDone
+                    
+                    // Force close past tasks
+                    if (isPast) {
+                        statusId = statusMap["closed"]
+                        progress = 100
                     }
 
                     // Fix constraints: Milestones must have same start/due date
@@ -68,29 +80,43 @@ class SyncWorkPackagesUseCase(
                     val updatedWp = wp.copy(
                         typeId = typeId,
                         statusId = statusId,
+                        percentageDone = progress,
                         dueDate = if (isMilestone) wp.startDate else wp.dueDate,
-                        estimatedTime = if ((wp.percentageDone ?: 0) > 0 && (wp.estimatedTime == null || wp.estimatedTime == "PT0H")) "PT1H" else wp.estimatedTime
+                        estimatedTime = if ((progress ?: 0) > 0 && (wp.estimatedTime == null || wp.estimatedTime == "PT0H")) "PT1H" else wp.estimatedTime
                     )
 
                     val expanded = expandTask(updatedWp)
                     println("    📝 Task: '${wp.subject}' expanded to ${expanded.size} items")
                     expanded.forEach { task ->
-                        val existing = existingPackages[task.subject]
+                        // Re-evaluate past status for expanded tasks (e.g. Monthly months)
+                        val taskDueDate = task.dueDate?.let { try { LocalDate.parse(it) } catch(_: Exception) { null } }
+                        val isTaskPast = taskDueDate != null && taskDueDate < today
+                        
+                        val finalTask = if (isTaskPast) {
+                            task.copy(
+                                statusId = statusMap["closed"],
+                                percentageDone = 100
+                            )
+                        } else {
+                            task
+                        }
+
+                        val existing = existingPackages[finalTask.subject]
                         if (existing == null) {
-                            println("    ➕ Creating new work package: '${task.subject}' (Type: ${task.typeId}, Status: ${task.statusId})")
-                            val result = repository.syncWorkPackage(task.copy(projectId = projectId))
+                            println("    ➕ Creating new work package: '${finalTask.subject}' (Type: ${finalTask.typeId}, Status: ${finalTask.statusId})")
+                            val result = repository.syncWorkPackage(finalTask.copy(projectId = projectId))
                             if (result.isFailure) {
-                                println("    ❌ Failed to create '${task.subject}': ${result.exceptionOrNull()?.message}")
+                                println("    ❌ Failed to create '${finalTask.subject}': ${result.exceptionOrNull()?.message}")
                             }
                         } else {
-                            println("    🔄 Updating existing work package: '${task.subject}' (ID: ${existing.id})")
-                            val result = repository.syncWorkPackage(task.copy(
+                            println("    🔄 Updating existing work package: '${finalTask.subject}' (ID: ${existing.id})")
+                            val result = repository.syncWorkPackage(finalTask.copy(
                                 id = existing.id,
                                 projectId = projectId,
                                 lockVersion = existing.lockVersion
                             ))
                             if (result.isFailure) {
-                                println("    ❌ Failed to update '${task.subject}': ${result.exceptionOrNull()?.message}")
+                                println("    ❌ Failed to update '${finalTask.subject}': ${result.exceptionOrNull()?.message}")
                             }
                         }
                     }

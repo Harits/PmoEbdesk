@@ -16,16 +16,20 @@ class SyncRepositoryImpl(
             row.tasks.map { task ->
                 WorkPackage(
                     subject = task,
-                    description = "Customer: ${row.customer}",
+                    description = null,
                     projectId = 0, 
                     startDate = formatDate(row.startDate),
                     dueDate = formatDate(row.finishDate),
                     percentageDone = row.progress,
                     estimatedTime = formatHours(row.hours) ?: "PT1H", // Fallback to 1h to allow progress updates
-                    customFields = mapOf(
-                        "projectName" to row.projectName,
+                    customFields = mutableMapOf(
+                        "projectName" to (row.fullProjectName ?: row.projectName),
                         "statusKet" to (row.statusKet ?: "")
-                    )
+                    ).apply {
+                        row.idPmo?.let { put("idPmo", it) }
+                        row.docReq?.let { put("docReq", it) }
+                        row.docTest?.let { put("docTest", it) }
+                    }
                 )
             }
         }
