@@ -24,6 +24,9 @@ data class WorkPackageElement(
     val estimatedTime: String? = null,
     val startDate: String? = null,
     val dueDate: String? = null,
+    val date: String? = null,
+    val derivedStartDate: String? = null,
+    val derivedDueDate: String? = null,
     @SerialName("_links")
     val _links: WorkPackageLinks? = null
 )
@@ -37,7 +40,7 @@ data class WorkPackageLinks(
 
 @Serializable
 data class Link(
-    val href: String,
+    val href: String? = null,
     val title: String? = null
 )
 

@@ -25,11 +25,6 @@ fun NetProgressCard(progress: Double, modifier: Modifier = Modifier) {
         Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Net Progress", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
-                    Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
-                    Box(modifier = Modifier.size(4.dp).background(Color.Gray, CircleShape))
-                }
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.Bottom) {

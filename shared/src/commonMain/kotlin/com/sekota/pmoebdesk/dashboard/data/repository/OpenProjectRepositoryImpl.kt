@@ -113,33 +113,55 @@ class ProductionOpenProjectRepositoryImpl(private val client: HttpClient = HttpC
             val httpResponse = client.get(url) {
                 header(HttpHeaders.Authorization, "Basic $encodedAuth")
                 header(HttpHeaders.Accept, "application/json")
-                parameter("pageSize", 100)
+                parameter("pageSize", 1000)
                 if (filters != "[]") {
                     parameter("filters", filters)
                 }
             }
 
             val responseText = httpResponse.bodyAsText()
+            println("DEBUG: Response Status: ${httpResponse.status}")
+            println("DEBUG: Response Body (start): ${responseText.take(500)}")
+
             if (httpResponse.status.value !in 200..299) {
                 error("OpenProject API error: ${httpResponse.status} - $responseText")
             }
 
             val response: WorkPackagesResponse = Json { ignoreUnknownKeys = true }.decodeFromString(responseText)
             val workPackages = response._embedded.elements
+            println("DEBUG: Fetched ${workPackages.size} work packages")
+            if (workPackages.isNotEmpty()) {
+                println("DEBUG: Sample WorkPackage[0]: id=${workPackages[0].id}, subject='${workPackages[0].subject}', dueDate=${workPackages[0].dueDate}, startDate=${workPackages[0].startDate}, type=${workPackages[0]._links?.type?.title}")
+            }
 
             val totalProgress = workPackages.mapNotNull { it.percentageDone }.average().takeIf { !it.isNaN() } ?: 0.0
 
             val exceptions = workPackages
-                .filter { (it.percentageDone ?: 0) < 100 && it.dueDate != null && isOverdue(it.dueDate) }
-                .map { ProjectException(it.subject, "Overdue since ${it.dueDate}. Progress: ${it.percentageDone ?: 0}%") }
+                .filter { 
+                    val date = it.dueDate ?: it.date ?: it.derivedDueDate
+                    (it.percentageDone ?: 0) < 100 && date != null && isOverdue(date) 
+                }
+                .map { 
+                    val date = it.dueDate ?: it.date ?: it.derivedDueDate
+                    ProjectException(it.subject, "Overdue since $date. Progress: ${it.percentageDone ?: 0}%") 
+                }
 
             val milestones = workPackages
                 .filter { 
-                    it._links?.type?.title?.contains("Milestone", ignoreCase = true) == true || 
-                    it.subject.contains("Milestone", ignoreCase = true) 
+                    val isMilestone = it._links?.type?.title?.contains("Milestone", ignoreCase = true) == true || 
+                                     it.subject.contains("Milestone", ignoreCase = true)
+                    if (isMilestone) {
+                        println("DEBUG: Milestone found: '${it.subject}', dueDate=${it.dueDate}, date=${it.date}, derivedDueDate=${it.derivedDueDate}, startDate=${it.startDate}, derivedStartDate=${it.derivedStartDate}")
+                    }
+                    isMilestone
                 }
-                .map { Milestone(it.subject, formatMonth(it.dueDate)) }
-                .sortedBy { it.date }
+                .sortedBy { it.dueDate ?: it.date ?: it.derivedDueDate ?: it.startDate ?: it.derivedStartDate ?: "9999-12-31" }
+                .map { 
+                    val date = it.dueDate ?: it.date ?: it.derivedDueDate ?: it.startDate ?: it.derivedStartDate
+                    val formatted = formatMonth(date)
+                    println("DEBUG: Formatted milestone: '${it.subject}', date=$date -> $formatted")
+                    Milestone(it.subject, formatted)
+                }
 
             val risks = workPackages
                 .filter { 
@@ -215,28 +237,43 @@ class ProductionOpenProjectRepositoryImpl(private val client: HttpClient = HttpC
     }
 
     private fun formatMonth(dateStr: String?): String {
-        if (dateStr == null) return "TBD"
+        if (dateStr.isNullOrBlank()) return "TBD"
         return try {
-            val parts = dateStr.split("-")
-            // Handle YYYY-MM-DD
-            val month = if (parts[0].length == 4) parts[1] else parts[1]
-            when(month) {
-                "01", "Jan" -> "Jan"
-                "02", "Feb" -> "Feb"
-                "03", "Mar" -> "Mar"
-                "04", "Apr" -> "Apr"
-                "05", "May" -> "May"
-                "06", "Jun" -> "Jun"
-                "07", "Jul" -> "Jul"
-                "08", "Aug" -> "Aug"
-                "09", "Sep" -> "Sep"
-                "10", "Oct" -> "Oct"
-                "11", "Nov" -> "Nov"
-                "12", "Dec" -> "Dec"
-                else -> "TBD"
+            val date = if (dateStr.contains("T")) {
+                dateStr.substringBefore("T").let { LocalDate.parse(it) }
+            } else {
+                LocalDate.parse(dateStr)
             }
+            date.month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
         } catch (e: Exception) {
-            "TBD"
+            // Fallback parsing for non-standard formats (e.g. 1-Jan-2025 or 2025/01/01)
+            try {
+                val parts = dateStr.split("-", "/", ".", " ")
+                val monthPart = if (parts.size == 3) {
+                    // Handle DD-MMM-YYYY or YYYY-MM-DD
+                    if (parts[0].length == 4) parts[1] else parts[1]
+                } else if (parts.size == 2) {
+                    if (parts[0].length == 4) parts[1] else parts[0]
+                } else dateStr
+                
+                when(monthPart.lowercase().removePrefix("0")) {
+                    "1", "jan", "january" -> "Jan"
+                    "2", "feb", "february" -> "Feb"
+                    "3", "mar", "march" -> "Mar"
+                    "4", "apr", "april" -> "Apr"
+                    "5", "may" -> "May"
+                    "6", "jun", "june" -> "Jun"
+                    "7", "jul", "july" -> "Jul"
+                    "8", "aug", "august" -> "Aug"
+                    "9", "sep", "september" -> "Sep"
+                    "10", "oct", "october" -> "Oct"
+                    "11", "nov", "november" -> "Nov"
+                    "12", "dec", "december" -> "Dec"
+                    else -> "TBD"
+                }
+            } catch (e2: Exception) {
+                "TBD"
+            }
         }
     }
 }

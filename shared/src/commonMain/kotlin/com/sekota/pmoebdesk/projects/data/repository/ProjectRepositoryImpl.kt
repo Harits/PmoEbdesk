@@ -92,7 +92,7 @@ class ProductionProjectRepositoryImpl(
                     val end = wpEnd ?: element.endDate
 
                     if (start == null || end == null) {
-                        println("      ⚠️ Project '${element.name}' (ID: ${element.id}) is missing dates in OpenProject.")
+                        println("DEBUG: Project '${element.name}' (ID: ${element.id}) missing dates. wpStart=$wpStart, wpEnd=$wpEnd, elStart=${element.startDate}, elEnd=${element.endDate}")
                     }
 
                     Project(
@@ -137,7 +137,6 @@ class ProductionProjectRepositoryImpl(
                 header(HttpHeaders.Authorization, authHeader)
                 parameter("filters", filters)
                 parameter("pageSize", 1000)
-                parameter("select", "id,subject,startDate,dueDate,_links")
             }
 
             if (response.status == HttpStatusCode.OK) {
@@ -150,8 +149,8 @@ class ProductionProjectRepositoryImpl(
                     wp._links?.project?.href?.split("/")?.lastOrNull()?.toIntOrNull()
                 }.mapNotNull { (projectId, wps) ->
                     if (projectId == null) return@mapNotNull null
-                    val start = wps.mapNotNull { it.startDate }.minOrNull()
-                    val end = wps.mapNotNull { it.dueDate }.maxOrNull()
+                    val start = wps.mapNotNull { it.startDate ?: it.date ?: it.derivedStartDate }.minOrNull()
+                    val end = wps.mapNotNull { it.dueDate ?: it.date ?: it.derivedDueDate }.maxOrNull()
                     projectId to (start to end)
                 }.toMap()
             }

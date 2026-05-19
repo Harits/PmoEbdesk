@@ -62,22 +62,36 @@ class SyncWorkPackagesUseCase(
                         else -> statusMap["new"]
                     }
 
+                    // Fix constraints: Milestones must have same start/due date
+                    val isMilestone = wp.subject.contains("Milestone", ignoreCase = true)
+                    
                     val updatedWp = wp.copy(
                         typeId = typeId,
-                        statusId = statusId
+                        statusId = statusId,
+                        dueDate = if (isMilestone) wp.startDate else wp.dueDate,
+                        estimatedTime = if ((wp.percentageDone ?: 0) > 0 && (wp.estimatedTime == null || wp.estimatedTime == "PT0H")) "PT1H" else wp.estimatedTime
                     )
 
                     val expanded = expandTask(updatedWp)
                     println("    📝 Task: '${wp.subject}' expanded to ${expanded.size} items")
                     expanded.forEach { task ->
-                        if (!existingPackages.containsKey(task.subject)) {
+                        val existing = existingPackages[task.subject]
+                        if (existing == null) {
                             println("    ➕ Creating new work package: '${task.subject}' (Type: ${task.typeId}, Status: ${task.statusId})")
                             val result = repository.syncWorkPackage(task.copy(projectId = projectId))
                             if (result.isFailure) {
                                 println("    ❌ Failed to create '${task.subject}': ${result.exceptionOrNull()?.message}")
                             }
                         } else {
-                            println("    ⏭️ Skipping '${task.subject}' (already exists)")
+                            println("    🔄 Updating existing work package: '${task.subject}' (ID: ${existing.id})")
+                            val result = repository.syncWorkPackage(task.copy(
+                                id = existing.id,
+                                projectId = projectId,
+                                lockVersion = existing.lockVersion
+                            ))
+                            if (result.isFailure) {
+                                println("    ❌ Failed to update '${task.subject}': ${result.exceptionOrNull()?.message}")
+                            }
                         }
                     }
                 }

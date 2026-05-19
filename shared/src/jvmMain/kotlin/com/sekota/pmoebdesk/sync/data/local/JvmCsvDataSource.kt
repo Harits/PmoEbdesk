@@ -16,51 +16,35 @@ class JvmCsvDataSource : CsvDataSource {
             csvReader {
                 autoRenameDuplicateHeaders = true
                 skipEmptyLine = true
-            }.readAllWithHeader(file).mapIndexed { index, row ->
-                // Based on analysis of ISO_PMO_ET_2025_COBA_1.csv headers/row:
-                // Column 1/2: Nama Projek
-                // Column 3: CUSTOMER
-                // Column 15: Start (but contains '5'?) -> Let's check headers vs indices
-                // Column 16: Finish (contains '9-Apr-2025')
-                // Column 17: Ket. (contains '30-Jun-2025')
-                // Column 28: ? (contains '09')
-                // Column 29: ? (contains '04')
-                // Column 30: Task 1 (contains 'Pembuatan Laporan Monthly')
-
-                val rowValues = row.values.toList()
+            }.readAllWithHeader(file).map { row ->
+                // Use headers for safer mapping when available
+                val isComplex = row.containsKey("Start_Date") || row.containsKey("Due_Date")
                 
-                // Log first row for debugging
-                if (index == 0) {
-                    println("      DEBUG: First row columns: ${rowValues.mapIndexed { i, v -> "[$i]:$v" }.joinToString(", ").take(200)}...")
-                }
-
-                // If index 0 contains "Nama Projek", assume it's the simple format from JvmCsvDataSourceTest
-                val isSimpleFormat = rowValues.getOrNull(0) == "Project A" || rowValues.getOrNull(1) == "Client X"
-
-                if (isSimpleFormat) {
+                if (isComplex) {
                     CsvRow(
-                        projectName = rowValues.getOrNull(0) ?: "",
-                        customer = rowValues.getOrNull(1) ?: "",
-                        startDate = rowValues.getOrNull(2),
-                        finishDate = rowValues.getOrNull(3),
-                        statusKet = null,
-                        progress = rowValues.getOrNull(4)?.replace("%", "")?.trim()?.toIntOrNull(),
-                        hours = rowValues.getOrNull(5),
-                        tasks = rowValues.drop(6).map { it.trim() }.filter { it.isNotBlank() }
+                        projectName = row["Nama Projek"] ?: row["Full_Project_Name"] ?: "",
+                        customer = row["CUSTOMER"] ?: "",
+                        startDate = row["Start_Date"],
+                        finishDate = row["Due_Date"],
+                        statusKet = row["Status_Ket"],
+                        progress = row["Progress_Percent"]?.trim()?.toIntOrNull(),
+                        hours = row["Estimated_Hours"],
+                        tasks = listOfNotNull(
+                            row["Task_1"],
+                            row["Task_2"]
+                        ).map { it.trim() }.filter { it.isNotBlank() }
                     )
                 } else {
+                    // Simple format fallback (like in tests)
                     CsvRow(
-                        projectName = rowValues.getOrNull(1) ?: "",
-                        customer = rowValues.getOrNull(3) ?: "",
-                        startDate = rowValues.getOrNull(15), 
-                        finishDate = rowValues.getOrNull(16),
-                        statusKet = rowValues.getOrNull(17),
-                        progress = rowValues.getOrNull(26)?.trim()?.toIntOrNull(),
-                        hours = rowValues.getOrNull(27),
-                        tasks = listOfNotNull(
-                            rowValues.getOrNull(28),
-                            rowValues.getOrNull(29)
-                        ).map { it.trim() }.filter { it.isNotBlank() }
+                        projectName = row["Nama Projek"] ?: row["Project Name"] ?: "",
+                        customer = row["CUSTOMER"] ?: row["Customer"] ?: "",
+                        startDate = row["Start"] ?: row["Start Date"],
+                        finishDate = row["Finish"] ?: row["Finish Date"],
+                        statusKet = row["Ket."] ?: row["Status"],
+                        progress = (row["Progress"] ?: row["Progress %"])?.replace("%", "")?.trim()?.toIntOrNull(),
+                        hours = row["Hours"] ?: row["Estimated Hours"],
+                        tasks = row.filterKeys { it.startsWith("Task") }.values.map { it.trim() }.filter { it.isNotBlank() }
                     )
                 }
             }

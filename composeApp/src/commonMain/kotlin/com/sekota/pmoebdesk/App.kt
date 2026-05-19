@@ -44,7 +44,7 @@ fun App(
                     onResetSelection()
                     currentScreen = "dashboard" 
                 },
-                selectedProjectName = selectedProject?.name
+                selectedProjectName = selectedProject?.name ?: "All Projects"
             )
             Box(modifier = Modifier.weight(1f)) {
                 if (currentScreen == "dashboard") {
