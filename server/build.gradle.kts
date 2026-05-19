@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.logback)
     implementation(libs.ktor.serverCore)
     implementation(libs.ktor.serverNetty)
+    implementation(libs.ktor.serverContentNegotiation)
 
     // OpenProject Sync Dependencies
     implementation(libs.ktor.client.core)

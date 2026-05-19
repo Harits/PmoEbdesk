@@ -1,0 +1,7 @@
+.gradle
+.idea
+node_modules
+.artifacts
+.git
+.DS_Store
+*.ipynb

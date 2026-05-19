@@ -1,13 +1,14 @@
-version: '3.8'
-
 services:
-  web:
+  dashboard:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
+      - "8080:8080"
     environment:
-      - OPENPROJECT_URL=${OPENPROJECT_URL:-}
+      - OPENPROJECT_URL=${OPENPROJECT_URL:-${OPENPROJECT_HOST:-}}
       - OPENPROJECT_API_KEY=${OPENPROJECT_API_KEY:-}
       - USE_MOCK_DATA=${USE_MOCK_DATA:-false}
+      - ALLOWED_PROJECT_IDS=${ALLOWED_PROJECT_IDS:-}
+      - PROJECT_PARENT_ID=${PROJECT_PARENT_ID:-}
+    restart: unless-stopped

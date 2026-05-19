@@ -55,6 +55,32 @@ Key fields to map from source files:
 - **Risks**: Use "Risk" in the subject for automatic detection in the Risk Heatmap.
 - **The Red List**: Populating `dueDate` and `percentageDone` is critical for identifying overdue items.
 
+## 🚀 Deployment & Containerization
+The project is optimized for a single-container deployment using Ktor to serve both the backend API and the Compose WasmJS frontend.
+
+### 1. Local Build Strategy
+To avoid memory-intensive compilation inside containers, always build artifacts on the host machine before packaging:
+```bash
+./gradlew :server:installDist :composeApp:wasmJsBrowserDistribution
+```
+
+### 2. Podman/Docker Execution
+Use the provided `docker-compose.yml` to start the unified container:
+```bash
+podman compose up --build
+```
+- **Unified Entrypoint**: The container runs on port `8080` (mapped from `SERVER_PORT`).
+- **Static Files**: The WasmJS UI is served from the `/app/www` directory.
+- **Built-in API Proxy**: The server transparently proxies `/api/*` requests to the `OPENPROJECT_URL` to bypass CORS issues.
+- **Dynamic Config**: The `/config.json` endpoint is generated at runtime from environment variables.
+
+### 3. Environment Variables
+Ensure the following are provided via `.env` or container environment:
+- `OPENPROJECT_URL` (or `OPENPROJECT_HOST`): The base URL of the OpenProject instance.
+- `OPENPROJECT_API_KEY`: API key for authentication.
+- `USE_MOCK_DATA`: Set to `true` for local UI testing without an active API.
+- `ALLOWED_PROJECT_IDS`: Comma-separated string of IDs to filter the dashboard.
+
 ## 🧱 OpenProject Business Rules & Validation
 When syncing or creating work packages, you MUST adhere to these API constraints:
 1. **Milestones**: For any Work Package of type "Milestone", `startDate` and `dueDate` **must be identical**. 

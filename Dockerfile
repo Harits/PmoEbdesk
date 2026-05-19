@@ -1,13 +1,16 @@
-FROM docker.io/library/node:18-alpine AS build
+# Simplified Runtime Image
+FROM docker.io/library/eclipse-temurin:17-jre-focal
 WORKDIR /app
-FROM eclipse-temurin:17-jdk-focal AS jvm-build
-WORKDIR /app
-COPY . .
-RUN ./gradlew :composeApp:wasmJsBrowserDistribution
 
-FROM nginx:alpine
-COPY --from=jvm-build /app/composeApp/build/dist/wasmJs/productionExecutable /usr/share/nginx/html
-COPY env.sh /docker-entrypoint.d/40-env.sh
-RUN chmod +x /docker-entrypoint.d/40-env.sh
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# IMPORTANT: Run the following on your host machine before building this image:
+# ./gradlew :server:installDist :composeApp:wasmJsBrowserDistribution
+
+# Copy pre-built Server (using relative paths from project root)
+COPY ./server/build/install/server /app/server
+# Copy pre-built UI files (using relative paths from project root)
+COPY ./composeApp/build/dist/wasmJs/productionExecutable /app/www
+
+EXPOSE 8080
+
+# Run the server
+ENTRYPOINT ["/app/server/bin/server"]
