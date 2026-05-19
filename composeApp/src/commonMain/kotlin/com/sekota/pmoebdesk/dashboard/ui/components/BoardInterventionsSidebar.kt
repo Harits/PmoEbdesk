@@ -31,7 +31,7 @@ fun BoardInterventionsSidebar(interventions: List<BoardIntervention>, modifier: 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 BoardInterventionIcon(modifier = Modifier.size(24.dp), color = Color.White)
                 Spacer(modifier = Modifier.width(12.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) { Text("Board Interventions", style = MaterialTheme.typography.titleLarge, color = Color.White); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Critical board-level decisions and interventions.", iconColor = Color.White) }
+                Row(verticalAlignment = Alignment.CenterVertically) { Text("Board Interventions", style = MaterialTheme.typography.titleLarge, color = Color.White); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Lists specific high-level actions that only the Board or Executive Steering Committee can authorize to keep the portfolio on track.", iconColor = Color.White) }
                 
                 if (isSigned) {
                     Spacer(modifier = Modifier.weight(1f))

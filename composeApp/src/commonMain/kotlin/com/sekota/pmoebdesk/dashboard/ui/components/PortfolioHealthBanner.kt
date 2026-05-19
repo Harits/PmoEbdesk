@@ -65,7 +65,7 @@ fun PortfolioHealthBanner(status: RAGStatus, trend: Double) {
             }
             Spacer(modifier = Modifier.width(24.dp))
             Column {
-                Row(verticalAlignment = Alignment.CenterVertically) { Text("Portfolio Health", style = MaterialTheme.typography.bodyMedium, color = Color.Gray); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Overall strategic health status of the portfolio.") }
+                Row(verticalAlignment = Alignment.CenterVertically) { Text("Portfolio Health", style = MaterialTheme.typography.bodyMedium, color = Color.Gray); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Displays the overall health of the project portfolio using a RAG (Red, Amber, Green) status. It represents a consolidated view of budget, schedule, and quality across all active projects.") }
                 Text("Strategic RAG Status: $statusText", style = MaterialTheme.typography.headlineLarge, color = Color.Black)
             }
             Spacer(modifier = Modifier.weight(1f))
