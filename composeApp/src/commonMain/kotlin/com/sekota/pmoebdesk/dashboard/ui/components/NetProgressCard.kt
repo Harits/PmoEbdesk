@@ -24,7 +24,7 @@ fun NetProgressCard(progress: Double, modifier: Modifier = Modifier) {
     ) {
         Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Net Progress", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy)
+                Row(verticalAlignment = Alignment.CenterVertically) { Text("Net Progress", style = MaterialTheme.typography.titleLarge, color = PrimaryNavy); Spacer(modifier = Modifier.width(8.dp)); InfoTooltip("Measures the actual completion rate of all portfolio tasks against the targets set for the current year. It provides a high-level view of whether the portfolio is meeting its delivery schedule.") }
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.Bottom) {
