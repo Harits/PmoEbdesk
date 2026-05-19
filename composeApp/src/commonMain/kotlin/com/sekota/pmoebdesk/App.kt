@@ -44,6 +44,9 @@ fun App(
                     onResetSelection()
                     currentScreen = "dashboard" 
                 },
+                onProjectSelectorClick = {
+                    currentScreen = "search"
+                },
                 selectedProjectName = selectedProject?.name ?: "All Projects"
             )
             Box(modifier = Modifier.weight(1f)) {

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +32,7 @@ fun TopBar(
     onQueryChange: (String) -> Unit = {},
     onSearchFocus: () -> Unit = {},
     onTitleClick: () -> Unit = {},
+    onProjectSelectorClick: () -> Unit = {},
     selectedProjectName: String? = null,
 ) {
     Row(
@@ -40,11 +42,14 @@ fun TopBar(
             .background(Color.White)
             .padding(horizontal = 32.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable(onClick = onTitleClick)
+            modifier = Modifier.clickable(
+                onClick = onTitleClick,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            )
         ) {
             Box(
                 modifier = Modifier
@@ -59,22 +64,61 @@ fun TopBar(
                 }
             }
             Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                "PMO Strategic Oversight",
+                style = MaterialTheme.typography.headlineLarge,
+                color = PrimaryNavy,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.width(32.dp))
+        
+        // Vertical Separator
+        Box(
+            modifier = Modifier
+                .width(1.dp)
+                .height(32.dp)
+                .background(OutlineVariant)
+        )
+
+        Spacer(modifier = Modifier.width(32.dp))
+
+        // Project Selector
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clickable(
+                    onClick = onProjectSelectorClick,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                )
+                .padding(vertical = 8.dp)
+        ) {
             Column {
                 Text(
-                    "PMO Strategic Oversight",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = PrimaryNavy,
-                    fontWeight = FontWeight.Bold
+                    "Selected Project",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.Gray
                 )
-                if (selectedProjectName != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        selectedProjectName,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
+                        selectedProjectName ?: "All Projects",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = PrimaryNavy,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Change project",
+                        tint = PrimaryNavy,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
         }
+
+        Spacer(modifier = Modifier.weight(1f))
         
         val interactionSource = remember { MutableInteractionSource() }
         val isFocused by interactionSource.collectIsFocusedAsState()
@@ -94,7 +138,7 @@ fun TopBar(
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Canvas(modifier = Modifier.size(18.dp)) {
                     val iconColor = if (isFocused) PrimaryNavy else Color.Gray
