@@ -211,8 +211,34 @@ class OpenProjectDataSourceImpl(
         }
     }
 
-    override suspend fun updateWorkPackage(id: Int, lockVersion: Int, statusName: String?): Boolean {
-        // This requires status href mapping, which should be handled in repository/usecase
-        return false // Simplified for now, status update logic will be refined
+    override suspend fun updateWorkPackage(id: Int, workPackage: WorkPackage): Boolean {
+        val payload = WorkPackagePayload(
+            lockVersion = workPackage.lockVersion ?: 0,
+            subject = workPackage.subject,
+            description = workPackage.description?.let { DescriptionPayload(raw = it) },
+            startDate = workPackage.startDate,
+            dueDate = workPackage.dueDate,
+            estimatedTime = workPackage.estimatedTime,
+            percentageDone = workPackage.percentageDone,
+            links = WorkPackageLinks(
+                project = Link(href = "/api/v3/projects/${workPackage.projectId}"),
+                type = workPackage.typeId?.let { Link(href = "/api/v3/types/$it") },
+                status = workPackage.statusId?.let { Link(href = "/api/v3/statuses/$it") }
+            )
+        )
+
+        val response: HttpResponse = client.patch("$host/api/v3/work_packages/$id") {
+            header(HttpHeaders.Authorization, authHeader)
+            contentType(ContentType.Application.Json)
+            setBody(payload)
+        }
+
+        return if (response.status == HttpStatusCode.OK) {
+            true
+        } else {
+            val errorBody = response.bodyAsText()
+            println("      ⚠️ API Update Error ${response.status}: $errorBody")
+            false
+        }
     }
 }

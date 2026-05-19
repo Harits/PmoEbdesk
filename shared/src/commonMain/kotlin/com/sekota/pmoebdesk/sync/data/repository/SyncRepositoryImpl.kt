@@ -62,8 +62,13 @@ class SyncRepositoryImpl(
     }
 
     override suspend fun syncWorkPackage(workPackage: WorkPackage): Result<Unit> {
-        val id = remoteDataSource.createWorkPackage(workPackage)
-        return if (id != null) Result.success(Unit) else Result.failure(Exception("Failed to create work package"))
+        return if (workPackage.id != null) {
+            val success = remoteDataSource.updateWorkPackage(workPackage.id.toInt(), workPackage)
+            if (success) Result.success(Unit) else Result.failure(Exception("Failed to update work package"))
+        } else {
+            val id = remoteDataSource.createWorkPackage(workPackage)
+            if (id != null) Result.success(Unit) else Result.failure(Exception("Failed to create work package"))
+        }
     }
 
     private fun formatDate(dateStr: String?): String? {
