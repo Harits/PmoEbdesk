@@ -20,7 +20,7 @@ The folder structure must reflect the **Business Domain**, not the frameworks us
 - **Small Functions**: No function should exceed 20 lines unless absolutely necessary for complex algorithms.
 
 ## 🧪 TDD First Protocol
-Before generating implementation code, you **MUST** write a failing test in the appropriate test directory that defines the expected behavior. Use mocking libraries (like `mockk`) to isolate units of code.
+Before generating implementation code, you **MUST** write a failing test in the appropriate test directory that defines the expected behavior. Use `kotlin-test` and `ktor-client-mock` to isolate units of code and mock API responses.
 
 ## 🛡️ Constraint Protocol
 When a new feature is requested, follow these steps strictly:
@@ -32,22 +32,35 @@ When a new feature is requested, follow these steps strictly:
 5. **Critique**: If the implementation violates the Dependency Rule or other principles, point it out and suggest a refactor before finalizing.
 
 ## 📁 Directory Structure & Context
+- **`shared/src/commonMain/kotlin/.../`**: 
+    - `sync/`: Logic for CSV parsing and OpenProject API interaction.
+    - `dashboard/`: Logic for fetching and aggregating metrics for the UI.
+    - `projects/`: UI and domain logic for project listing and search.
 - **`data/`**: Source `.xlsx` or `.csv` files. Path configured via `CSV_FILE_PATH` in `.env`.
 - **`.design/`**: Design documents and UI/UX specifications.
 - **`.openproject/`**: `work_packages_api.md` (API details & Ktor examples) and `.env.example`.
 - **`.jules/`**: `api_reference.md` (Jules API docs) and `.env.example`.
+- **Notebooks**: `OpenProjectSync.ipynb` and `Dashboard.ipynb` are used for prototyping sync logic and data analysis.
 
 ## 📊 Dashboard Data Consistency
 When implementing sync logic from CSV/Excel, you **MUST** ensure the OpenProject work packages are populated with fields that drive the BoD Dashboard. Refer to `OPENPROJECT_DATA_MAPPING.md` for full details.
 
 Key fields to map from source files:
 - **Net Progress**: Map to `percentageDone` (0-100).
+- **Keywords**: Look for "Milestone" or "Risk" in columns like `Task_1`, `Task_2`, or `Full_Project_Name`.
 - **Effort Distribution**: 
     - Map "Hours" to `estimatedTime` using ISO 8601 format (e.g., `PT8H`).
     - Use keywords "Strategic" or "Growth" in the `subject` to categorize as Strategic vs BAU.
 - **Critical Path**: Ensure `dueDate` is populated for items intended as Milestones. Use "Milestone" in the subject or ensure the Work Package Type is set correctly.
 - **Risks**: Use "Risk" in the subject for automatic detection in the Risk Heatmap.
 - **The Red List**: Populating `dueDate` and `percentageDone` is critical for identifying overdue items.
+
+## 🧱 OpenProject Business Rules & Validation
+When syncing or creating work packages, you MUST adhere to these API constraints:
+1. **Milestones**: For any Work Package of type "Milestone", `startDate` and `dueDate` **must be identical**. 
+2. **Progress vs. Effort**: OpenProject does not allow `% Complete` (`percentageDone`) to be set if `Estimated Time` (`estimatedTime`) is 0 or null. 
+   - *Rule*: If `percentageDone > 0`, ensure `estimatedTime` is at least `PT1H`.
+3. **Date Consistency**: `dueDate` cannot be earlier than `startDate`.
 
 ## 🛠️ Typical Sync Pipeline Tasks
 1. **Environment Setup**: Read variables from `.env` (credentials, `CSV_FILE_PATH`).
