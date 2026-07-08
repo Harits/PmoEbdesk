@@ -87,6 +87,10 @@ When syncing or creating work packages, you MUST adhere to these API constraints
 2. **Progress vs. Effort**: OpenProject does not allow `% Complete` (`percentageDone`) to be set if `Estimated Time` (`estimatedTime`) is 0 or null. 
    - *Rule*: If `percentageDone > 0`, ensure `estimatedTime` is at least `PT1H`.
 3. **Date Consistency**: `dueDate` cannot be earlier than `startDate`.
+4. **Date Formatting**: CSV start/finish dates must be formatted as `d-MMM-yyyy` (using English month abbreviations: `Jan`, `Feb`, `Mar`, `Apr`, `May`, `Jun`, `Jul`, `Aug`, `Sep`, `Oct`, `Nov`, `Dec`) to prevent parsing failures.
+5. **Monthly Task Expansion**: Standardize task names containing `"bulanan"` or `"bulanan selama"` to use the keyword `"Monthly"` so the sync engine's task expansion logic executes successfully.
+6. **Header Layout**: Use the operational CSV header structure exactly:
+   `,Nama Projek,Nama Projek,CUSTOMER,,IMA,ISA,IAS,BDAAS,Report,AI,HARDWARE,SALES,Semester,Waktu kerja sama,Start,Finish,Ket.,ID PMO,Tgl Dibuat,Tgl Last Update,,,,,,,,Task 1,Task 2,capture Doc Permintaan,Doc Pengujian`
 
 ## 🛠️ Typical Sync Pipeline Tasks
 1. **Environment Setup**: Read variables from `.env` (credentials, `CSV_FILE_PATH`).
